@@ -197,8 +197,8 @@ def retune_midi(input_path: str, output_path: str, tuning_table: list[TuningEntr
     mid = mido.MidiFile(input_path)
     out = mido.MidiFile(ticks_per_beat=mid.ticks_per_beat)
 
-    # Channel allocation for MPE
-    channel_pool = list(range(1, 16))  # channels 1-15
+    # Channel allocation for MPE (skip channel 9 = GM drums)
+    channel_pool = [ch for ch in range(1, 16) if ch != 9]
     note_to_channel: dict[int, int] = {}  # original_note → MPE channel
     free_channels = list(channel_pool)
 
@@ -215,7 +215,7 @@ def retune_midi(input_path: str, output_path: str, tuning_table: list[TuningEntr
             out_track.append(mido.Message('control_change', channel=0, control=6, value=15, time=0))
             out_track.append(mido.Message('control_change', channel=0, control=38, value=0, time=0))
 
-            # Set pitch bend range on all member channels
+            # Set pitch bend range on all member channels (excl. ch 9 = GM drums)
             for ch in channel_pool:
                 out_track.append(mido.Message('control_change', channel=ch, control=101, value=0, time=0))
                 out_track.append(mido.Message('control_change', channel=ch, control=100, value=0, time=0))

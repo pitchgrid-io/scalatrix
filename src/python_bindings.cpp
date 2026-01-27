@@ -145,7 +145,9 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("retuneThreePoints", &MOS::retuneThreePoints)
         .def("generateScaleFromMOS", &MOS::generateScaleFromMOS)
         .def("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
-        .def("mapFromMOS", &MOS::mapFromMOS);
+        .def("mapFromMOS", &MOS::mapFromMOS)
+        .def("nodeInScale", &MOS::nodeInScale)
+        .def("nodeEquaveNr", &MOS::nodeEquaveNr);
 
     // pitchset.hpp
 
