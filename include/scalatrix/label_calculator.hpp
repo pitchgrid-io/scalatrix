@@ -35,9 +35,7 @@ public:
         return nodeLabelDigit(mos, v);
     }
 
-    LabelCalculator() {
-        diatonic_mos = MOS::fromParams (5, 2, 1, 1.0, .585);
-    }
+    LabelCalculator() : diatonic_mos(MOS::fromParams (5, 2, 1, 1.0, .585)) {}
 
 private:
     MOS diatonic_mos;

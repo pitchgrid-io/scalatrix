@@ -10,11 +10,13 @@ namespace scalatrix {
 class MOS {
 public:
 
+    MOS(int a, int b, int m, double e, double g);
+
     int a, b, n, a0, b0, n0, mode, nL, nS;
     int repetitions, depth;
     double equave; // log2(frequency ratio) of equave (interval of equivalence)
     double period; // log2(frequency ratio) of MOS period
-    double generator; 
+    double generator;
 
     Vector2i L_vec, s_vec, chroma_vec;
     double L_fr, s_fr, chroma_fr;
@@ -26,9 +28,9 @@ public:
     Scale base_scale;
 
 
-    static MOS& fromParams(int a, int b, int m, double e, double g);
-    //static MOS& fromImpliedAffine(const AffineTransform& A, int repetitions);
-    static MOS& fromG(int depth, int m, double g, double e, int repetitions = 1);
+    static MOS fromParams(int a, int b, int m, double e, double g);
+    //static MOS fromImpliedAffine(const AffineTransform& A, int repetitions);
+    static MOS fromG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustParams(int a, int b, int m, double e, double g);
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);

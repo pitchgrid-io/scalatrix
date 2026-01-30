@@ -15,6 +15,11 @@
 namespace scalatrix {
 
 
+MOS::MOS(int a, int b, int m, double e, double g) {
+    adjustParams(a, b, m, e, g);
+}
+
+
 int gcd(int a, int b) {
     if (b == 0) return a;
     return gcd(b, a % b);
@@ -91,10 +96,8 @@ Vector2i applyPathReverse(const std::vector<bool> path, const Vector2i& v) {
 }
 
 
-MOS& MOS::fromParams(int a, int b, int m, double e, double g){
-    static MOS _self;
-    _self.adjustParams(a, b, m, e, g);
-    return _self;
+MOS MOS::fromParams(int a, int b, int m, double e, double g){
+    return MOS(a, b, m, e, g);
 }
 
 void MOS::updateVectors(){
@@ -166,7 +169,6 @@ void MOS::adjustParams(int a, int b, int m, double e, double g){
 }
 
 void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
-    this->repetitions = _repetitions;
     int a0 = 1;
     int b0 = 1;
     double a_len = g;
@@ -180,12 +182,10 @@ void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
             b_len -= a_len;
         }
     }
-    this->adjustParams(a0*repetitions, b0*repetitions, m, e, g);
+    this->adjustParams(a0*_repetitions, b0*_repetitions, m, e, g);
 }
 
-MOS& MOS::fromG(int depth, int m, double g, double e, int repetitions){
-    static MOS _self;
-    _self.repetitions = repetitions;
+MOS MOS::fromG(int depth, int m, double g, double e, int repetitions){
     int a0 = 1;
     int b0 = 1;
     double a_len = g;
@@ -199,8 +199,7 @@ MOS& MOS::fromG(int depth, int m, double g, double e, int repetitions){
             b_len -= a_len;
         }
     }
-    _self.adjustParams(a0*repetitions, b0*repetitions, m, e, g);
-    return _self;
+    return MOS(a0*repetitions, b0*repetitions, m, e, g);
 }
 
 double MOS::gFromAngle(double angle){
