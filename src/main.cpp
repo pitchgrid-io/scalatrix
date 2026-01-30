@@ -58,6 +58,8 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .function("generateScaleFromMOS", &MOS::generateScaleFromMOS)
         .function("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .function("nodeInScale", &MOS::nodeInScale)
+        .function("nodeScaleDegree", &MOS::nodeScaleDegree)
+        .function("nodeEquaveNr", &MOS::nodeEquaveNr)
         .property("L_vec", &MOS::L_vec)
         .property("s_vec", &MOS::s_vec)
         .property("chroma_vec", &MOS::chroma_vec)
