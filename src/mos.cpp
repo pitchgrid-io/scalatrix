@@ -337,6 +337,44 @@ bool MOS::nodeInScale(Vector2i v) const{
     return true;
 }
 
+int MOS::nodeAccidental(Vector2i v) const {
+    // Calculate accidental count from MOS coordinates
+    // Positive = sharp direction, Negative = flat direction
+    int acc_sign = L_vec.x == 1 ? 1 : -1;
+    int neutral_mode = L_vec.x == 1 ? 1 : n0 - 2;
+    int n_generators = v.x * b0 - v.y * a0;
+    int acc = acc_sign * (int)floor((n_generators + neutral_mode + 0.5) / n0);
+    return acc;
+}
+
+Vector2i MOS::mosCoordFromNotation(int step, int alter, int octave) const {
+    // Convert notation (step, alter, octave) to MOS coordinates (a, b)
+    // 
+    // 1. Get natural note coordinates from base_scale
+    // 2. Add octave offset: (a, b) * octave  
+    // 3. Add accidental offset: chroma_vec * alter
+    
+    // Normalize step to 0..n-1
+    int normalized_step = ((step % n) + n) % n;
+    
+    // Get natural note coordinates from base_scale
+    const std::vector<Node>& nodes = base_scale.getNodes();
+    Vector2i natural_coord = nodes[normalized_step].natural_coord;
+    
+    // Add octave offset (using period vector a0, b0)
+    int result_x = natural_coord.x + a0 * octave;
+    int result_y = natural_coord.y + b0 * octave;
+    
+    // Add accidental offset (chroma_vec * alter)
+    // Note: for bright generators (L_vec.x == 1), sharps go in +chroma direction
+    //       for dark generators (L_vec.x == 0), sharps go in -chroma direction
+    int chroma_multiplier = (L_vec.x == 1) ? alter : -alter;
+    result_x += chroma_vec.x * chroma_multiplier;
+    result_y += chroma_vec.y * chroma_multiplier;
+    
+    return Vector2i(result_x, result_y);
+}
+
 // Deprecated methods - forwarding to LabelCalculator
 std::string MOS::nodeLabelDigit(Vector2i v) const {
     return LabelCalculator::nodeLabelDigit(*this, v);

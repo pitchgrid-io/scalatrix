@@ -52,6 +52,7 @@ public:
 
     void print(int first = 58, int num = 5) const;
     std::vector<Node>& getNodes();
+    const std::vector<Node>& getNodes() const;
     void recalcWithAffine(const AffineTransform& A, int N, int n_root);
     void retuneWithAffine(const AffineTransform& A);
     int getRootIdx() const { return root_idx_; }

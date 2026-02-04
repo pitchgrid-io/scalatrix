@@ -97,7 +97,7 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("fromAffine", &Scale::fromAffine)
         .def("recalcWithAffine", &Scale::recalcWithAffine)
         .def("retuneWithAffine", &Scale::retuneWithAffine)
-        .def("getNodes", &Scale::getNodes, py::return_value_policy::reference)
+        .def("getNodes", static_cast<std::vector<Node>& (Scale::*)()>(&Scale::getNodes), py::return_value_policy::reference)
         .def("getRootIdx", &Scale::getRootIdx)
         .def("temperToPitchSet", &Scale::temperToPitchSet)
         .def("print", &Scale::print);
@@ -147,7 +147,10 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .def("mapFromMOS", &MOS::mapFromMOS)
         .def("nodeInScale", &MOS::nodeInScale)
-        .def("nodeEquaveNr", &MOS::nodeEquaveNr);
+        .def("nodeEquaveNr", &MOS::nodeEquaveNr)
+        .def("nodeScaleDegree", &MOS::nodeScaleDegree)
+        .def("nodeAccidental", &MOS::nodeAccidental)
+        .def("mosCoordFromNotation", &MOS::mosCoordFromNotation);
 
     // pitchset.hpp
 

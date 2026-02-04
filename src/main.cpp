@@ -15,7 +15,8 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .property("ty", &IntegerAffineTransform::ty)
         .function("apply", &IntegerAffineTransform::apply)
         .function("applyAffine", &IntegerAffineTransform::applyAffine)
-        .function("inverse", &IntegerAffineTransform::inverse);
+        .function("inverse", &IntegerAffineTransform::inverse)
+        .class_function("linearFromTwoDots", &IntegerAffineTransform::linearFromTwoDots);
 
     emscripten::class_<AffineTransform>("AffineTransform")
         .constructor<double, double, double, double, double, double>()  // Full constructor with tx, ty
@@ -34,7 +35,7 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .class_function("fromAffine", &Scale::fromAffine)
         .function("recalcWithAffine", &Scale::recalcWithAffine)
         .function("retuneWithAffine", &Scale::retuneWithAffine)
-        .function("getNodes", &Scale::getNodes)
+        .function("getNodes", static_cast<std::vector<Node>& (Scale::*)()>(&Scale::getNodes))
         .function("print", &Scale::print);
     
     //emscripten::register_vector<bool>("mosPath");
@@ -58,8 +59,10 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .function("generateScaleFromMOS", &MOS::generateScaleFromMOS)
         .function("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .function("nodeInScale", &MOS::nodeInScale)
-        .function("nodeScaleDegree", &MOS::nodeScaleDegree)
         .function("nodeEquaveNr", &MOS::nodeEquaveNr)
+        .function("nodeScaleDegree", &MOS::nodeScaleDegree)
+        .function("nodeAccidental", &MOS::nodeAccidental)
+        .function("mosCoordFromNotation", &MOS::mosCoordFromNotation)
         .property("L_vec", &MOS::L_vec)
         .property("s_vec", &MOS::s_vec)
         .property("chroma_vec", &MOS::chroma_vec)

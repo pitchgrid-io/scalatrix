@@ -163,6 +163,10 @@ std::vector<Node>& Scale::getNodes(){
     return nodes_;
 }
 
+const std::vector<Node>& Scale::getNodes() const {
+    return nodes_;
+}
+
 
 // destructor
 Scale::~Scale() {
