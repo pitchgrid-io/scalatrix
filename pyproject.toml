@@ -12,8 +12,19 @@ dependencies = []
 
 [tool.scikit-build]
 cmake.minimum-version = "3.15"
-cmake.args = []
 cmake.build-type = "Release"
+# For cross-compilation, set CMAKE_OSX_ARCHITECTURES env var before building:
+#   CMAKE_OSX_ARCHITECTURES=x86_64 uv pip install .
+# Or use the wheel.macos.archs setting below
 
 [tool.scikit-build.cmake.define]
 BUILD_PYTHON = "ON"
+
+# macOS deployment target for compatibility
+[tool.scikit-build.cmake.define."CMAKE_OSX_DEPLOYMENT_TARGET"]
+env = "MACOSX_DEPLOYMENT_TARGET"
+default = "10.15"
+
+# Architecture override via environment variable
+[tool.scikit-build.cmake.define."CMAKE_OSX_ARCHITECTURES"]
+env = "CMAKE_OSX_ARCHITECTURES"
