@@ -98,8 +98,11 @@ export interface MOS extends ClassHandle {
   retuneTwoPoints(_0: Vector2i, _1: Vector2i, _2: number): void;
   retuneThreePoints(_0: Vector2i, _1: Vector2i, _2: Vector2i, _3: number): void;
   nodeInScale(_0: Vector2i): boolean;
-  nodeScaleDegree(_0: Vector2i): number;
   nodeEquaveNr(_0: Vector2i): number;
+  nodeScaleDegree(_0: Vector2i): number;
+  nodeAccidental(_0: Vector2i): number;
+  mosCoordFromNotation(_0: number, _1: number, _2: number): Vector2i;
+  mapFromMOS(_0: MOS, _1: Vector2i): Vector2i;
 }
 
 export type Vector2d = {
@@ -156,6 +159,7 @@ export interface PitchSet extends ClassHandle {
 interface EmbindModule {
   IntegerAffineTransform: {
     new(_0: number, _1: number, _2: number, _3: number, _4: number, _5: number): IntegerAffineTransform;
+    linearFromTwoDots(_0: Vector2i, _1: Vector2i, _2: Vector2i, _3: Vector2i): IntegerAffineTransform;
   };
   AffineTransform: {
     new(_0: number, _1: number, _2: number, _3: number, _4: number, _5: number): AffineTransform;
