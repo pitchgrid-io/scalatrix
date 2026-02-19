@@ -64,9 +64,6 @@ public:
     Vector2i mapFromMOS(MOS& other, Vector2i v);
 
     int nodeEquaveNr(Vector2i v) const {return (v.x + v.y + 256*n) / n - 256;}
-    bool nodeInScale(Vector2i v) const;
-    
-    // Scale degree (0 to n-1) within the period
     int nodeScaleDegree(Vector2i v) const {return (v.x + v.y + 256*n) % n;}
     bool nodeInScale(Vector2i v) const;
 
