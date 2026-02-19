@@ -24,6 +24,8 @@
 #include "scalatrix/mos.hpp"
 #include "scalatrix/pitchset.hpp"
 #include "scalatrix/label_calculator.hpp"
+#include "scalatrix/spectrum.hpp"
+#include "scalatrix/consonance.hpp"
 
 
 #endif // SCALATRIX_HPP
