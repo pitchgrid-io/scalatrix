@@ -179,4 +179,53 @@ PYBIND11_MODULE(scalatrix, m) {
 
 
     m.def("affineFromThreeDots", &scalatrix::affineFromThreeDots);
+
+    // Spectrum bindings
+    py::class_<Partial>(m, "Partial")
+        .def(py::init<>())
+        .def(py::init([](double r, double a) { return Partial{r, a}; }))
+        .def_readwrite("ratio", &Partial::ratio)
+        .def_readwrite("amplitude", &Partial::amplitude);
+
+    py::class_<Spectrum>(m, "Spectrum")
+        .def(py::init<>())
+        .def_readwrite("partials", &Spectrum::partials)
+        .def_static("harmonic", &Spectrum::harmonic,
+            py::arg("n_partials"), py::arg("decay") = 0.88)
+        .def_static("oddHarmonic", &Spectrum::oddHarmonic,
+            py::arg("max_harmonic"), py::arg("decay") = 0.88)
+        .def_static("pseudoharmonic", &Spectrum::pseudoharmonic,
+            py::arg("n_partials"), py::arg("decay") = 0.88,
+            py::arg("prime_cents") = std::map<int, double>{{2, 1200.0}, {3, 1900.0}, {5, 2800.0}});
+
+    // Consonance bindings
+    py::class_<PLCurve>(m, "PLCurve")
+        .def_readwrite("cents", &PLCurve::cents)
+        .def_readwrite("pl", &PLCurve::pl);
+
+    py::class_<HullResult>(m, "HullResult")
+        .def_readwrite("cents", &HullResult::cents)
+        .def_readwrite("pl", &HullResult::pl)
+        .def_readwrite("hull", &HullResult::hull)
+        .def_readwrite("spiky", &HullResult::spiky);
+
+    py::class_<IntervalConsonance>(m, "IntervalConsonance")
+        .def_readwrite("name", &IntervalConsonance::name)
+        .def_readwrite("cents", &IntervalConsonance::cents)
+        .def_readwrite("consonance", &IntervalConsonance::consonance);
+
+    py::class_<ConsonanceResult>(m, "ConsonanceResult")
+        .def_readwrite("intervals", &ConsonanceResult::intervals)
+        .def_readwrite("mean_consonance", &ConsonanceResult::mean_consonance)
+        .def_readwrite("total_consonance", &ConsonanceResult::total_consonance);
+
+    m.def("computePLCurve", &computePLCurve,
+        py::arg("spectrum"), py::arg("f0"),
+        py::arg("cents_min"), py::arg("cents_max"), py::arg("resolution") = 0.5);
+    m.def("computeHull3", &computeHull3,
+        py::arg("pl_curve"), py::arg("order") = 3, py::arg("spike_threshold") = 0.005);
+    m.def("consonanceValue", &consonanceValue, py::arg("spiky_normalized"));
+    m.def("analyzeScale", &analyzeScale,
+        py::arg("spectrum"), py::arg("f0"), py::arg("intervals"),
+        py::arg("max_cents") = 2000.0, py::arg("max_interval_cents") = 1950.0);
 }

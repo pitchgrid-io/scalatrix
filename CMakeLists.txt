@@ -22,6 +22,8 @@ set(SOURCES
     src/label_calculator.cpp
     src/node.cpp
     src/main.cpp
+    src/spectrum.cpp
+    src/consonance.cpp
 )
 
 # Main library target
