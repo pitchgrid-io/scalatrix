@@ -59,12 +59,12 @@ endif()
 
 # Python bindings
 if(BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 REQUIRED)
 
     add_library(scalatrix_python MODULE ${SOURCES} src/python_bindings.cpp)
     target_include_directories(scalatrix_python PUBLIC include)
-    target_link_libraries(scalatrix_python PRIVATE pybind11::pybind11 Python3::Python)
+    target_link_libraries(scalatrix_python PRIVATE pybind11::pybind11 Python3::Module)
 
     # Set platform-appropriate suffix for Python extension module
     if(WIN32)
