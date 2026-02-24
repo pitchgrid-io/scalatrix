@@ -323,10 +323,18 @@ void MOS::retuneThreePoints(Vector2i fixed1, Vector2i fixed2, Vector2i v, double
 };
 
 Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const {
+    // Use structure_generator for the mapping affine so that MIDI assignments
+    // stay fixed when structure is locked (structure_generator frozen).
+    // When unlocked, structure_generator == generator so this is identical.
+    double q = 0.5/n0;
+    AffineTransform structureAffine = affineFromThreeDots(
+        {0,0}, {(double)v_gen.x, (double)v_gen.y}, {(double)a0,(double)b0},
+        {0,q*(2*mode+1)}, {structure_generator * period, q*(2*mode+3)}, {period, q*(2*mode+1)}
+    );
     double mos_offset = (offset + 0.5) / steps;
     double mos_scale_factor = static_cast<double>(n) / steps;
     AffineTransform stretched_t(1, 0, 0, mos_scale_factor, 0, 0);
-    AffineTransform squeezed_t = stretched_t * impliedAffine;
+    AffineTransform squeezed_t = stretched_t * structureAffine;
     squeezed_t.ty = mos_offset;
     return Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
 }
