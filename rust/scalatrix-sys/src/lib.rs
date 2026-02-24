@@ -91,10 +91,6 @@ extern "C" {
         equave: f64, generator: f64, repetitions: c_int,
     );
 
-    pub fn scalatrix_mos_adjust_tuning(
-        mos: *mut scalatrix_mos_t,
-        mode: c_int, equave: f64, generator: f64,
-    );
 
     pub fn scalatrix_mos_adjust_tuning_g(
         mos: *mut scalatrix_mos_t,

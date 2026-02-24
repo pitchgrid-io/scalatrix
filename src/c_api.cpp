@@ -67,11 +67,6 @@ void scalatrix_mos_adjust_params(
     MOS_MUT(mos)->adjustParams(a, b, mode, equave, generator, repetitions);
 }
 
-void scalatrix_mos_adjust_tuning(
-    scalatrix_mos_t* mos, int mode, double equave, double generator)
-{
-    MOS_MUT(mos)->adjustTuning(mode, equave, generator);
-}
 
 void scalatrix_mos_adjust_tuning_g(
     scalatrix_mos_t* mos, int depth, int mode, double generator, double equave, int repetitions)

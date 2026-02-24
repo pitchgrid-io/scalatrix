@@ -135,7 +135,7 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("adjustG", &MOS::adjustG)
         .def("adjustTuningG", &MOS::adjustTuningG)
         .def("adjustParams", &MOS::adjustParams)
-        .def("adjustTuning", &MOS::adjustTuning)
+
         .def("coordToFreq", &MOS::coordToFreq)
         .def("angle", &MOS::angle)
         .def("angleStd", &MOS::angleStd)

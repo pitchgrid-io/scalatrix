@@ -62,8 +62,6 @@ void scalatrix_mos_adjust_params(
     scalatrix_mos_t* mos,
     int a, int b, int mode, double equave, double generator, int repetitions);
 
-void scalatrix_mos_adjust_tuning(
-    scalatrix_mos_t* mos, int mode, double equave, double generator);
 
 void scalatrix_mos_adjust_tuning_g(
     scalatrix_mos_t* mos, int depth, int mode, double generator, double equave, int repetitions);

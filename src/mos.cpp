@@ -16,8 +16,8 @@ namespace scalatrix {
 
 
 MOS::MOS(int a, int b, int m, double e, double g) {
-    adjustParams(a, b, m, e, g);
     this->structure_generator = g;
+    adjustParams(a, b, m, e, g);
 }
 
 
@@ -162,8 +162,8 @@ void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions)
 
     this->updateVectors();
 
+    this->structureImpliedAffine = calcStructureImpliedAffine();
     this->base_scale = Scale::fromAffine(this->impliedAffine, 1.0, n+1, 0);
-
 
     this->mosTransform = IntegerAffineTransform::linearFromTwoDots(
         {1, 0}, {1, 1},
@@ -171,15 +171,6 @@ void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions)
     );
 }
 
-void MOS::adjustTuning(int m, double e, double g){
-    this->mode = m;
-    this->equave = e;
-    this->period = e / this->repetitions;
-    this->generator = g;
-    this->impliedAffine = calcImpliedAffine();
-    this->updateVectors();
-    this->base_scale = Scale::fromAffine(this->impliedAffine, 1.0, this->n + 1, 0);
-}
 
 void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
     this->structure_generator = g;
@@ -274,6 +265,14 @@ AffineTransform MOS::calcImpliedAffine() const {
     );
 };
 
+AffineTransform MOS::calcStructureImpliedAffine() const {
+    double q = 0.5/n0;
+    return affineFromThreeDots(
+        {0,0}, {(double)v_gen.x, (double)v_gen.y}, {(double)a0,(double)b0},
+        {0,q*(2*mode+1)}, {structure_generator * period, q*(2*mode+3)}, {period, q*(2*mode+1)}
+    );
+};
+
 
 
 
@@ -323,20 +322,21 @@ void MOS::retuneThreePoints(Vector2i fixed1, Vector2i fixed2, Vector2i v, double
 };
 
 Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const {
-    // Use structure_generator for the mapping affine so that MIDI assignments
-    // stay fixed when structure is locked (structure_generator frozen).
-    // When unlocked, structure_generator == generator so this is identical.
-    double q = 0.5/n0;
-    AffineTransform structureAffine = affineFromThreeDots(
-        {0,0}, {(double)v_gen.x, (double)v_gen.y}, {(double)a0,(double)b0},
-        {0,q*(2*mode+1)}, {structure_generator * period, q*(2*mode+3)}, {period, q*(2*mode+1)}
-    );
+    // Use structureImpliedAffine for node selection (which notes land in the strip)
     double mos_offset = (offset + 0.5) / steps;
     double mos_scale_factor = static_cast<double>(n) / steps;
     AffineTransform stretched_t(1, 0, 0, mos_scale_factor, 0, 0);
-    AffineTransform squeezed_t = stretched_t * structureAffine;
+    AffineTransform squeezed_t = stretched_t * structureImpliedAffine;
     squeezed_t.ty = mos_offset;
-    return Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
+    Scale scale = Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
+
+    // Retune nodes using impliedAffine (tuning generator) for correct pitches
+    for (auto& node : scale.getNodes()) {
+        node.tuning_coord = impliedAffine * node.natural_coord;
+        node.pitch = base_freq * std::exp2(node.tuning_coord.x);
+    }
+
+    return scale;
 }
 
 Scale MOS::generateScaleFromMOS(double base_freq, int n_nodes, int root){

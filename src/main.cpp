@@ -46,7 +46,7 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .function("adjustG", &MOS::adjustG)
         .function("adjustTuningG", &MOS::adjustTuningG)
         .function("adjustParams", &MOS::adjustParams)
-        .function("adjustTuning", &MOS::adjustTuning)
+
         .function("coordToFreq", &MOS::coordToFreq)
         .function("angle", &MOS::angle)
         .function("angleStd", &MOS::angleStd)

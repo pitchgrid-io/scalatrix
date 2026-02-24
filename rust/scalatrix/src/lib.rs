@@ -176,11 +176,6 @@ impl Mos {
         }
     }
 
-    /// Change only tuning parameters (mode, equave, generator) without
-    /// changing the scale structure (a, b).
-    pub fn adjust_tuning(&mut self, mode: i32, equave: f64, generator: f64) {
-        unsafe { ffi::scalatrix_mos_adjust_tuning(self.ptr, mode, equave, generator) }
-    }
 
     /// Like `adjust_g`, but only changes the tuning generator.
     /// The structure generator stays frozen, so the Stern-Brocot tree walk

@@ -24,6 +24,7 @@ public:
 
     std::vector<bool> path;
     AffineTransform impliedAffine;
+    AffineTransform structureImpliedAffine;
     IntegerAffineTransform mosTransform;
     Vector2i v_gen;
     Scale base_scale;
@@ -35,7 +36,7 @@ public:
     void adjustG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustTuningG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustParams(int a, int b, int m, double e, double g, int repetitions = 1);
-    void adjustTuning(int m, double e, double g);
+
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);
 
     double coordToFreq(double x, double y, double base_freq);
@@ -44,6 +45,7 @@ public:
     double angleStd() const;
 
     AffineTransform calcImpliedAffine() const;
+    AffineTransform calcStructureImpliedAffine() const;
     void updateVectors();
 
     double gFromAngle(double angle);
