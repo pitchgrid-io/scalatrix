@@ -148,8 +148,10 @@ impl Mos {
     pub fn equave(&self) -> f64 { unsafe { ffi::scalatrix_mos_equave(self.ptr) } }
     /// log2 frequency ratio of period.
     pub fn period(&self) -> f64 { unsafe { ffi::scalatrix_mos_period(self.ptr) } }
-    /// Generator as fraction of period.
+    /// Generator (tuning) as fraction of period.
     pub fn generator(&self) -> f64 { unsafe { ffi::scalatrix_mos_generator(self.ptr) } }
+    /// Structure generator (frozen when structure is locked).
+    pub fn structure_generator(&self) -> f64 { unsafe { ffi::scalatrix_mos_structure_generator(self.ptr) } }
     /// log2 frequency ratio of the large interval.
     pub fn large_step_ratio(&self) -> f64 { unsafe { ffi::scalatrix_mos_L_fr(self.ptr) } }
     /// log2 frequency ratio of the small interval.
@@ -178,6 +180,13 @@ impl Mos {
     /// changing the scale structure (a, b).
     pub fn adjust_tuning(&mut self, mode: i32, equave: f64, generator: f64) {
         unsafe { ffi::scalatrix_mos_adjust_tuning(self.ptr, mode, equave, generator) }
+    }
+
+    /// Like `adjust_g`, but only changes the tuning generator.
+    /// The structure generator stays frozen, so the Stern-Brocot tree walk
+    /// uses the original generator to determine (a, b).
+    pub fn adjust_tuning_g(&mut self, depth: i32, mode: i32, generator: f64, equave: f64, repetitions: i32) {
+        unsafe { ffi::scalatrix_mos_adjust_tuning_g(self.ptr, depth, mode, generator, equave, repetitions) }
     }
 
     // ── Queries ────────────────────────────────────────────────────

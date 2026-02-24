@@ -48,6 +48,7 @@ int    scalatrix_mos_repetitions(const scalatrix_mos_t* m) { return MOS_PTR(m)->
 double scalatrix_mos_equave(const scalatrix_mos_t* m)      { return MOS_PTR(m)->equave; }
 double scalatrix_mos_period(const scalatrix_mos_t* m)      { return MOS_PTR(m)->period; }
 double scalatrix_mos_generator(const scalatrix_mos_t* m)   { return MOS_PTR(m)->generator; }
+double scalatrix_mos_structure_generator(const scalatrix_mos_t* m) { return MOS_PTR(m)->structure_generator; }
 double scalatrix_mos_L_fr(const scalatrix_mos_t* m)        { return MOS_PTR(m)->L_fr; }
 double scalatrix_mos_s_fr(const scalatrix_mos_t* m)        { return MOS_PTR(m)->s_fr; }
 double scalatrix_mos_chroma_fr(const scalatrix_mos_t* m)   { return MOS_PTR(m)->chroma_fr; }
@@ -70,6 +71,12 @@ void scalatrix_mos_adjust_tuning(
     scalatrix_mos_t* mos, int mode, double equave, double generator)
 {
     MOS_MUT(mos)->adjustTuning(mode, equave, generator);
+}
+
+void scalatrix_mos_adjust_tuning_g(
+    scalatrix_mos_t* mos, int depth, int mode, double generator, double equave, int repetitions)
+{
+    MOS_MUT(mos)->adjustTuningG(depth, mode, generator, equave, repetitions);
 }
 
 /* ── MOS queries ───────────────────────────────────────────────────── */

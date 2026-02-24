@@ -17,6 +17,7 @@ namespace scalatrix {
 
 MOS::MOS(int a, int b, int m, double e, double g) {
     adjustParams(a, b, m, e, g);
+    this->structure_generator = g;
 }
 
 
@@ -181,6 +182,7 @@ void MOS::adjustTuning(int m, double e, double g){
 }
 
 void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
+    this->structure_generator = g;
     int a0 = 1;
     int b0 = 1;
     double a_len = g;
@@ -194,6 +196,25 @@ void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
             b_len -= a_len;
         }
     }
+    this->adjustParams(a0, b0, m, e, g, _repetitions);
+}
+
+void MOS::adjustTuningG(int depth, int m, double g, double e, int _repetitions){
+    // Tree walk uses frozen structure_generator to determine (a,b)
+    int a0 = 1;
+    int b0 = 1;
+    double a_len = this->structure_generator;
+    double b_len = 1.0 - this->structure_generator;
+    for (int i = 0; i < depth; i++) {
+        if (a_len > b_len) {
+            b0+=a0;
+            a_len -= b_len;
+        } else {
+            a0+=b0;
+            b_len -= a_len;
+        }
+    }
+    // Only tuning generator changes; structure_generator stays frozen
     this->adjustParams(a0, b0, m, e, g, _repetitions);
 }
 

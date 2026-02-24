@@ -16,7 +16,8 @@ public:
     int repetitions, depth;
     double equave; // log2(frequency ratio) of equave (interval of equivalence)
     double period; // log2(frequency ratio) of MOS period
-    double generator;
+    double generator; // tuning generator (used in calcImpliedAffine for frequencies)
+    double structure_generator; // structure generator (used for Stern-Brocot tree walk)
 
     Vector2i L_vec, s_vec, chroma_vec;
     double L_fr, s_fr, chroma_fr;
@@ -32,6 +33,7 @@ public:
     //static MOS fromImpliedAffine(const AffineTransform& A, int repetitions);
     static MOS fromG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustG(int depth, int m, double g, double e, int repetitions = 1);
+    void adjustTuningG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustParams(int a, int b, int m, double e, double g, int repetitions = 1);
     void adjustTuning(int m, double e, double g);
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);

@@ -74,6 +74,7 @@ extern "C" {
     pub fn scalatrix_mos_equave(mos: *const scalatrix_mos_t) -> f64;
     pub fn scalatrix_mos_period(mos: *const scalatrix_mos_t) -> f64;
     pub fn scalatrix_mos_generator(mos: *const scalatrix_mos_t) -> f64;
+    pub fn scalatrix_mos_structure_generator(mos: *const scalatrix_mos_t) -> f64;
     pub fn scalatrix_mos_L_fr(mos: *const scalatrix_mos_t) -> f64;
     pub fn scalatrix_mos_s_fr(mos: *const scalatrix_mos_t) -> f64;
     pub fn scalatrix_mos_chroma_fr(mos: *const scalatrix_mos_t) -> f64;
@@ -93,6 +94,11 @@ extern "C" {
     pub fn scalatrix_mos_adjust_tuning(
         mos: *mut scalatrix_mos_t,
         mode: c_int, equave: f64, generator: f64,
+    );
+
+    pub fn scalatrix_mos_adjust_tuning_g(
+        mos: *mut scalatrix_mos_t,
+        depth: c_int, mode: c_int, generator: f64, equave: f64, repetitions: c_int,
     );
 
     // ── MOS queries ────────────────────────────────────────────────

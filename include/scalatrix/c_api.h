@@ -47,6 +47,7 @@ int    scalatrix_mos_repetitions(const scalatrix_mos_t* mos);
 double scalatrix_mos_equave(const scalatrix_mos_t* mos);
 double scalatrix_mos_period(const scalatrix_mos_t* mos);
 double scalatrix_mos_generator(const scalatrix_mos_t* mos);
+double scalatrix_mos_structure_generator(const scalatrix_mos_t* mos);
 double scalatrix_mos_L_fr(const scalatrix_mos_t* mos);
 double scalatrix_mos_s_fr(const scalatrix_mos_t* mos);
 double scalatrix_mos_chroma_fr(const scalatrix_mos_t* mos);
@@ -63,6 +64,9 @@ void scalatrix_mos_adjust_params(
 
 void scalatrix_mos_adjust_tuning(
     scalatrix_mos_t* mos, int mode, double equave, double generator);
+
+void scalatrix_mos_adjust_tuning_g(
+    scalatrix_mos_t* mos, int depth, int mode, double generator, double equave, int repetitions);
 
 /* ── MOS queries ───────────────────────────────────────────────────── */
 
