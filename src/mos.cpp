@@ -168,6 +168,16 @@ void MOS::adjustParams(int a, int b, int m, double e, double g){
     );
 }
 
+void MOS::adjustTuning(int m, double e, double g){
+    this->mode = m;
+    this->equave = e;
+    this->period = e / this->repetitions;
+    this->generator = g;
+    this->impliedAffine = calcImpliedAffine();
+    this->updateVectors();
+    this->base_scale = Scale::fromAffine(this->impliedAffine, 1.0, this->n + 1, 0);
+}
+
 void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
     int a0 = 1;
     int b0 = 1;

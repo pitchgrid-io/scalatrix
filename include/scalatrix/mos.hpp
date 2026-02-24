@@ -33,6 +33,7 @@ public:
     static MOS fromG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustParams(int a, int b, int m, double e, double g);
+    void adjustTuning(int m, double e, double g);
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);
 
     double coordToFreq(double x, double y, double base_freq);
