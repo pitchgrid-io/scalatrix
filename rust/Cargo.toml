@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "scalatrix-sys",
+    "scalatrix",
+    "examples/osc-receiver",
+]

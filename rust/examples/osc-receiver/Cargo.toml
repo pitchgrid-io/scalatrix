@@ -1,0 +1,9 @@
+[package]
+name = "osc-receiver"
+version = "0.1.0"
+edition = "2021"
+description = "Example: receive PitchGrid tuning/mapping data via OSC, generate scales"
+
+[dependencies]
+scalatrix = { path = "../../scalatrix" }
+rosc = "0.10"

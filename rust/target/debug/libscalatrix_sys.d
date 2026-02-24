@@ -1,0 +1,1 @@
+/Users/peter/dev/PitchGrid/scalatrix/rust/target/debug/libscalatrix_sys.rlib: /Users/peter/dev/PitchGrid/scalatrix/include /Users/peter/dev/PitchGrid/scalatrix/rust/scalatrix-sys/build.rs /Users/peter/dev/PitchGrid/scalatrix/rust/scalatrix-sys/src/lib.rs /Users/peter/dev/PitchGrid/scalatrix/src

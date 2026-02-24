@@ -24,6 +24,7 @@ set(SOURCES
     src/main.cpp
     src/spectrum.cpp
     src/consonance.cpp
+    src/c_api.cpp
 )
 
 # Main library target

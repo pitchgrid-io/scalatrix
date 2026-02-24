@@ -1,0 +1,9 @@
+[package]
+name = "scalatrix"
+version = "0.1.0"
+edition = "2021"
+description = "Safe Rust bindings to the scalatrix microtonal scale library"
+license = "MIT"
+
+[dependencies]
+scalatrix-sys = { path = "../scalatrix-sys" }
