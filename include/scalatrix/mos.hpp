@@ -28,11 +28,11 @@ public:
     Scale base_scale;
 
 
-    static MOS fromParams(int a, int b, int m, double e, double g);
+    static MOS fromParams(int a, int b, int m, double e, double g, int repetitions = 1);
     //static MOS fromImpliedAffine(const AffineTransform& A, int repetitions);
     static MOS fromG(int depth, int m, double g, double e, int repetitions = 1);
     void adjustG(int depth, int m, double g, double e, int repetitions = 1);
-    void adjustParams(int a, int b, int m, double e, double g);
+    void adjustParams(int a, int b, int m, double e, double g, int repetitions = 1);
     void adjustTuning(int m, double e, double g);
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);
 

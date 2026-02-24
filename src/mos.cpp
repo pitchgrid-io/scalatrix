@@ -96,8 +96,8 @@ Vector2i applyPathReverse(const std::vector<bool> path, const Vector2i& v) {
 }
 
 
-MOS MOS::fromParams(int a, int b, int m, double e, double g){
-    return MOS(a, b, m, e, g);
+MOS MOS::fromParams(int a, int b, int m, double e, double g, int repetitions){
+    return MOS(a * repetitions, b * repetitions, m, e, g);
 }
 
 void MOS::updateVectors(){
@@ -128,7 +128,9 @@ double MOS::coordToFreq(double x, double y, double base_freq){
     return base_freq * std::exp2((this->impliedAffine * Vector2d(x,y)).x);
 }
 
-void MOS::adjustParams(int a, int b, int m, double e, double g){
+void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions){
+    a *= repetitions;
+    b *= repetitions;
     assert(a > 0);
     assert(b > 0);
     assert(0.0 <= g && g <= 1.0);
@@ -192,7 +194,7 @@ void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
             b_len -= a_len;
         }
     }
-    this->adjustParams(a0*_repetitions, b0*_repetitions, m, e, g);
+    this->adjustParams(a0, b0, m, e, g, _repetitions);
 }
 
 MOS MOS::fromG(int depth, int m, double g, double e, int repetitions){
