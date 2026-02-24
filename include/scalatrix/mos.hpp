@@ -19,8 +19,12 @@ public:
     double generator; // tuning generator (used in calcImpliedAffine for frequencies)
     double structure_generator; // structure generator (used for Stern-Brocot tree walk)
 
+    // Tuning-based vectors (from impliedAffine)
     Vector2i L_vec, s_vec, chroma_vec;
     double L_fr, s_fr, chroma_fr;
+
+    // Structure-based vectors (from structureImpliedAffine) — used for labels
+    Vector2i structure_L_vec, structure_s_vec, structure_chroma_vec;
 
     std::vector<bool> path;
     AffineTransform impliedAffine;
@@ -47,6 +51,7 @@ public:
     AffineTransform calcImpliedAffine() const;
     AffineTransform calcStructureImpliedAffine() const;
     void updateVectors();
+    void updateStructureVectors();
 
     double gFromAngle(double angle);
 

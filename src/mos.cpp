@@ -125,6 +125,21 @@ void MOS::updateVectors(){
     this->chroma_fr = this->L_fr - this->s_fr;
 }
 
+void MOS::updateStructureVectors(){
+    Vector2i v1 = {1, 0};
+    Vector2i v2 = {0, 1};
+    double v1_fr = this->structureImpliedAffine.apply(v1).x;
+    double v2_fr = this->structureImpliedAffine.apply(v2).x;
+    if (v1_fr > v2_fr) {
+        this->structure_L_vec = v1;
+        this->structure_s_vec = v2;
+    } else {
+        this->structure_L_vec = v2;
+        this->structure_s_vec = v1;
+    }
+    this->structure_chroma_vec = this->structure_L_vec - this->structure_s_vec;
+}
+
 double MOS::coordToFreq(double x, double y, double base_freq){
     return base_freq * std::exp2((this->impliedAffine * Vector2d(x,y)).x);
 }
@@ -163,6 +178,7 @@ void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions)
     this->updateVectors();
 
     this->structureImpliedAffine = calcStructureImpliedAffine();
+    this->updateStructureVectors();
     this->base_scale = Scale::fromAffine(this->impliedAffine, 1.0, n+1, 0);
 
     this->mosTransform = IntegerAffineTransform::linearFromTwoDots(
@@ -388,10 +404,10 @@ bool MOS::nodeInScale(Vector2i v) const{
 }
 
 int MOS::nodeAccidental(Vector2i v) const {
-    // Calculate accidental count from MOS coordinates
+    // Calculate accidental count from MOS coordinates (structure-based)
     // Positive = sharp direction, Negative = flat direction
-    int acc_sign = L_vec.x == 1 ? 1 : -1;
-    int neutral_mode = L_vec.x == 1 ? 1 : n0 - 2;
+    int acc_sign = structure_L_vec.x == 1 ? 1 : -1;
+    int neutral_mode = structure_L_vec.x == 1 ? 1 : n0 - 2;
     int n_generators = v.x * b0 - v.y * a0;
     int acc = acc_sign * (int)floor((n_generators + neutral_mode + 0.5) / n0);
     return acc;
@@ -416,11 +432,11 @@ Vector2i MOS::mosCoordFromNotation(int step, int alter, int octave) const {
     int result_y = natural_coord.y + b0 * octave;
     
     // Add accidental offset (chroma_vec * alter)
-    // Note: for bright generators (L_vec.x == 1), sharps go in +chroma direction
-    //       for dark generators (L_vec.x == 0), sharps go in -chroma direction
-    int chroma_multiplier = (L_vec.x == 1) ? alter : -alter;
-    result_x += chroma_vec.x * chroma_multiplier;
-    result_y += chroma_vec.y * chroma_multiplier;
+    // Note: for bright generators (structure_L_vec.x == 1), sharps go in +chroma direction
+    //       for dark generators (structure_L_vec.x == 0), sharps go in -chroma direction
+    int chroma_multiplier = (structure_L_vec.x == 1) ? alter : -alter;
+    result_x += structure_chroma_vec.x * chroma_multiplier;
+    result_y += structure_chroma_vec.y * chroma_multiplier;
     
     return Vector2i(result_x, result_y);
 }
