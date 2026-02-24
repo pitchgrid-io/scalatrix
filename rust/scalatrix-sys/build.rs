@@ -26,7 +26,8 @@ fn main() {
     build
         .cpp(true)
         .std("c++17")
-        .include(&include_dir);
+        .include(&include_dir)
+;
 
     for file in &cpp_files {
         build.file(src_dir.join(file));

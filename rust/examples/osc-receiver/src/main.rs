@@ -14,14 +14,17 @@
 //!   (mode: i32, root_freq: f32, stretch: f32, skew: f32,
 //!    mode_offset: i32, steps: i32, mos_a: i32, mos_b: i32)
 //!
-//! This example also sends heartbeats to the plugin so it knows we're connected,
-//! and handles heartbeat acknowledgments.
+//! ## Protocol
+//!
+//! - Receiver binds to an ephemeral port and sends heartbeats to the plugin
+//!   on port 34562: `/pitchgrid/heartbeat [1, <my_port>]`
+//! - Plugin registers the receiver and sends data to `<my_port>`
+//! - Plugin sends its own heartbeat: `/pitchgrid/heartbeat [1]`
+//! - Both sides consider the connection dead after 2s without a heartbeat
+//! - Up to 9 receivers can connect simultaneously
 //!
 //! Usage:
 //!   cargo run -p osc-receiver
-//!
-//! The plugin's OSC server listens on port 34562 (our send target)
-//! and sends to port 34561 (our receive port).
 
 use std::net::UdpSocket;
 use std::time::{Duration, Instant};
@@ -29,9 +32,8 @@ use std::time::{Duration, Instant};
 use rosc::{OscMessage, OscPacket, OscType};
 use scalatrix::Mos;
 
-/// Default ports matching the PitchGrid plugin's OSC configuration.
-const RECEIVE_PORT: u16 = 34561; // We listen here (plugin sends to this port)
-const PLUGIN_PORT: u16 = 34562;  // Plugin listens here (we send heartbeats here)
+/// Plugin's OSC server port (we send heartbeats here).
+const PLUGIN_PORT: u16 = 34562;
 
 /// Parsed tuning/mapping parameters from an OSC message.
 #[derive(Debug, Clone)]
@@ -65,11 +67,11 @@ impl PitchGridParams {
     }
 }
 
-/// Send a heartbeat message to the PitchGrid plugin.
-fn send_heartbeat(socket: &UdpSocket) {
+/// Send a heartbeat message to the PitchGrid plugin, including our listen port.
+fn send_heartbeat(socket: &UdpSocket, my_port: u16) {
     let msg = OscMessage {
         addr: "/pitchgrid/heartbeat".into(),
-        args: vec![OscType::Int(1)],
+        args: vec![OscType::Int(1), OscType::Int(my_port as i32)],
     };
     let packet = rosc::encoder::encode(&OscPacket::Message(msg)).unwrap();
     let _ = socket.send_to(&packet, format!("127.0.0.1:{PLUGIN_PORT}"));
@@ -121,21 +123,26 @@ fn process_mapping(params: &PitchGridParams) {
 }
 
 fn main() {
+    // Bind to ephemeral port (OS assigns an available port)
+    let socket = UdpSocket::bind("127.0.0.1:0")
+        .expect("Failed to bind receive socket");
+    let my_port = socket.local_addr().unwrap().port();
+
     println!("PitchGrid OSC Receiver");
     println!("======================");
-    println!("Listening on port {RECEIVE_PORT}, sending heartbeats to port {PLUGIN_PORT}");
+    println!("Listening on port {my_port}, sending heartbeats to port {PLUGIN_PORT}");
     println!();
 
-    // Bind receive socket
-    let socket = UdpSocket::bind(format!("127.0.0.1:{RECEIVE_PORT}"))
-        .expect("Failed to bind receive socket");
     socket
         .set_read_timeout(Some(Duration::from_millis(500)))
         .unwrap();
 
     let mut buf = [0u8; 2048];
-    let mut last_heartbeat = Instant::now();
+    let mut last_heartbeat_sent = Instant::now();
+    let mut last_heartbeat_recv = Instant::now();
     let heartbeat_interval = Duration::from_secs(1);
+    let connection_timeout = Duration::from_secs(2);
+    let mut connected = false;
 
     // Track last received params to avoid redundant processing
     let mut last_mapping: Option<String> = None;
@@ -143,10 +150,19 @@ fn main() {
     println!("Waiting for PitchGrid plugin...\n");
 
     loop {
-        // Send periodic heartbeat
-        if last_heartbeat.elapsed() >= heartbeat_interval {
-            send_heartbeat(&socket);
-            last_heartbeat = Instant::now();
+        // Send periodic heartbeat (with our port)
+        if last_heartbeat_sent.elapsed() >= heartbeat_interval {
+            send_heartbeat(&socket, my_port);
+            last_heartbeat_sent = Instant::now();
+        }
+
+        // Check connection status
+        let was_connected = connected;
+        connected = last_heartbeat_recv.elapsed() < connection_timeout;
+        if was_connected && !connected {
+            println!("[status] Disconnected from plugin");
+        } else if !was_connected && connected {
+            println!("[status] Connected to plugin");
         }
 
         // Try to receive
@@ -162,11 +178,13 @@ fn main() {
 
                 if let OscPacket::Message(msg) = packet {
                     match msg.addr.as_str() {
-                        "/pitchgrid/heartbeat/ack" => {
-                            // Plugin acknowledged our heartbeat — connection is alive
+                        "/pitchgrid/heartbeat" => {
+                            // Plugin heartbeat — connection is alive
+                            last_heartbeat_recv = Instant::now();
                         }
 
                         "/pitchgrid/plugin/tuning" => {
+                            last_heartbeat_recv = Instant::now();
                             if let Some(params) = PitchGridParams::from_osc_args(&msg.args) {
                                 println!("[tuning] mode={}, root={:.2}Hz, stretch={:.6}, skew={:.6}, offset={}, steps={}, mos=({},{})",
                                     params.mode, params.root_freq, params.stretch, params.skew,
@@ -175,6 +193,7 @@ fn main() {
                         }
 
                         "/pitchgrid/plugin/mapping" => {
+                            last_heartbeat_recv = Instant::now();
                             if let Some(params) = PitchGridParams::from_osc_args(&msg.args) {
                                 // Dedup: only process if params actually changed
                                 let key = format!("{:?}", params);
