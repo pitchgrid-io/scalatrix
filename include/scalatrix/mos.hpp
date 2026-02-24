@@ -60,6 +60,7 @@ public:
     void retuneThreePoints(Vector2i fixed1, Vector2i fixed2, Vector2i v, double log2fr);
 
     Scale generateScaleFromMOS(double base_freq, int n, int root);
+    Scale generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const;
     void retuneScaleWithMOS(Scale& scale, double base_freq);
 
     Vector2i mapFromMOS(MOS& other, Vector2i v);

@@ -147,6 +147,7 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("retuneTwoPoints", &MOS::retuneTwoPoints)
         .def("retuneThreePoints", &MOS::retuneThreePoints)
         .def("generateScaleFromMOS", &MOS::generateScaleFromMOS)
+        .def("generateMappedScale", &MOS::generateMappedScale)
         .def("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .def("mapFromMOS", &MOS::mapFromMOS)
         .def("nodeInScale", &MOS::nodeInScale)

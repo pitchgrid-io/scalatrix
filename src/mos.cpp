@@ -301,6 +301,15 @@ void MOS::retuneThreePoints(Vector2i fixed1, Vector2i fixed2, Vector2i v, double
     _recalcOnRetuneUsingAffine(A);
 };
 
+Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const {
+    double mos_offset = (offset + 0.5) / steps;
+    double mos_scale_factor = static_cast<double>(n) / steps;
+    AffineTransform stretched_t(1, 0, 0, mos_scale_factor, 0, 0);
+    AffineTransform squeezed_t = stretched_t * impliedAffine;
+    squeezed_t.ty = mos_offset;
+    return Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
+}
+
 Scale MOS::generateScaleFromMOS(double base_freq, int n_nodes, int root){
     Scale scale = Scale(base_freq, n_nodes, root);
     for (int i=-root; i<n_nodes-root; i++){

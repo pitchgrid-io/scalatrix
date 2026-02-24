@@ -58,6 +58,7 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .function("retuneTwoPoints", &MOS::retuneTwoPoints)
         .function("retuneThreePoints", &MOS::retuneThreePoints)
         .function("generateScaleFromMOS", &MOS::generateScaleFromMOS)
+        .function("generateMappedScale", &MOS::generateMappedScale)
         .function("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .function("nodeInScale", &MOS::nodeInScale)
         .function("nodeEquaveNr", &MOS::nodeEquaveNr)
