@@ -39,7 +39,7 @@ double MOS::angleStd() const {
 
 double MOS::angle() const {
     double angle = angleStd();
-    for (int d = 0; d < path.size(); d++) {
+    for (size_t d = 0; d < path.size(); d++) {
         if (path[d]) {
             angle = atan2(tan(angle)-1, 1);
         }else{
@@ -219,7 +219,7 @@ double MOS::gFromAngle(double angle){
     std::reverse(reversed_path.begin(), reversed_path.end());
 
     double angle_ = angle;
-    for (int d = 0; d < reversed_path.size(); d++) {
+    for (size_t d = 0; d < reversed_path.size(); d++) {
         if (reversed_path[d]) {
             angle_ = atan2(tan(angle_)+1, 1);
         }else{
@@ -330,7 +330,7 @@ Scale MOS::generateScaleFromMOS(double base_freq, int n_nodes, int root){
 void MOS::retuneScaleWithMOS(Scale& scale, double base_freq){
     //int n_nodes = scale.getNodes().size();
     int root_idx = scale.getRootIdx();
-    for (int i = 0; i < scale.getNodes().size(); i++) {
+    for (int i = 0; i < static_cast<int>(scale.getNodes().size()); i++) {
         int idx = (i - root_idx + 128*n) % n;
         int octave_nr = (i - root_idx + 128*n) / n - 128;
         Node& ref = this->base_scale.getNodes()[idx];

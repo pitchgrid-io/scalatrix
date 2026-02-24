@@ -86,7 +86,7 @@ PitchSet generateJIPitchSet(PrimeList primes, int max_numorden, double min_log2f
             if (std::gcd(num.number, den.number) > 1){
                 continue;
             }
-            if (num.number <= max_numorden && den.number <= max_numorden) {
+            if (static_cast<int>(num.number) <= max_numorden && static_cast<int>(den.number) <= max_numorden) {
                 PitchSetPitch pitch;
                 pitch.label = num.label + ":" + den.label;
                 pitch.log2fr = num.log2fr - den.log2fr;

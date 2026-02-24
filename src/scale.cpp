@@ -102,7 +102,7 @@ void Scale::recalcWithAffine(const AffineTransform& A, int N, int root_node_idx)
 }
 
 void Scale::retuneWithAffine(const AffineTransform& A) {
-    for (int n = 0; n < nodes_.size(); ++n) {
+    for (size_t n = 0; n < nodes_.size(); ++n) {
         Node& node = nodes_[n];
         node.tuning_coord = A * node.natural_coord;
         node.pitch = base_freq_ * std::exp2(node.tuning_coord.x);
@@ -113,7 +113,7 @@ void Scale::retuneWithAffine(const AffineTransform& A) {
 
 void Scale::print(int first, int num) const {
     for (int i = first; i < first + num; ++i) {
-        if (i < 0 || i >= nodes_.size()) {
+        if (i < 0 || static_cast<size_t>(i) >= nodes_.size()) {
             std::cout << "Node " << i << " out of range\n";
         } else {
             const Node& node = nodes_[i];
