@@ -130,8 +130,10 @@ PYBIND11_MODULE(scalatrix, m) {
         .def_readwrite("mosTransform", &MOS::mosTransform)
         .def_readwrite("v_gen", &MOS::v_gen)
         .def_readwrite("base_scale", &MOS::base_scale)
-        .def_static("fromParams", &MOS::fromParams)
-        .def_static("fromG", &MOS::fromG)
+        .def_static("fromParams", &MOS::fromParams,
+            py::arg("a"), py::arg("b"), py::arg("m"), py::arg("e"), py::arg("g"), py::arg("repetitions") = 1)
+        .def_static("fromG", &MOS::fromG,
+            py::arg("depth"), py::arg("m"), py::arg("g"), py::arg("e"), py::arg("repetitions") = 1)
         .def("adjustG", &MOS::adjustG)
         .def("adjustTuningG", &MOS::adjustTuningG)
         .def("adjustParams", &MOS::adjustParams)
