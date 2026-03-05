@@ -76,6 +76,9 @@ int  scalatrix_mos_node_accidental(const scalatrix_mos_t* mos, scalatrix_vec2i v
 double scalatrix_mos_coord_to_freq(
     scalatrix_mos_t* mos, double x, double y, double base_freq);
 
+scalatrix_vec2i scalatrix_mos_map_from_mos(
+    scalatrix_mos_t* mos, scalatrix_mos_t* other, scalatrix_vec2i v);
+
 /* ── Scale generation ──────────────────────────────────────────────── */
 
 scalatrix_scale_t* scalatrix_mos_generate_mapped_scale(

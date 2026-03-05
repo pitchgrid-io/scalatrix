@@ -98,6 +98,12 @@ double scalatrix_mos_coord_to_freq(
     return MOS_MUT(mos)->coordToFreq(x, y, base_freq);
 }
 
+scalatrix_vec2i scalatrix_mos_map_from_mos(
+    scalatrix_mos_t* mos, scalatrix_mos_t* other, scalatrix_vec2i v)
+{
+    return to_c(MOS_MUT(mos)->mapFromMOS(*MOS_MUT(other), from_c(v)));
+}
+
 /* ── Scale generation ──────────────────────────────────────────────── */
 
 scalatrix_scale_t* scalatrix_mos_generate_mapped_scale(
