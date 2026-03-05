@@ -14,6 +14,15 @@
 
 namespace scalatrix {
 
+/*
+ * Nudge a generator away from exact rational values (0.5, 1/n, etc.)
+ * that cause degenerate lattices. These arise from user entry of exact
+ * values and implicit rounding. The 1e-6 offset is inaudible but
+ * prevents singular affine transforms in scale generation.
+ */
+static double sanitize_generator(double g) {
+    return g + (g < 0.5 ? 1e-6 : -1e-6);
+}
 
 MOS::MOS(int a, int b, int m, double e, double g) {
     this->structure_generator = g;
@@ -190,10 +199,11 @@ void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions)
 
 void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
     this->structure_generator = g;
+    double sg = sanitize_generator(g);
     int a0 = 1;
     int b0 = 1;
-    double a_len = g;
-    double b_len = 1.0 - g;
+    double a_len = sg;
+    double b_len = 1.0 - sg;
     for (int i = 0; i < depth; i++) {
         if (a_len > b_len) {
             b0+=a0;
@@ -208,10 +218,11 @@ void MOS::adjustG(int depth, int m, double g, double e, int _repetitions){
 
 void MOS::adjustTuningG(int depth, int m, double g, double e, int _repetitions){
     // Tree walk uses frozen structure_generator to determine (a,b)
+    double sg = sanitize_generator(this->structure_generator);
     int a0 = 1;
     int b0 = 1;
-    double a_len = this->structure_generator;
-    double b_len = 1.0 - this->structure_generator;
+    double a_len = sg;
+    double b_len = 1.0 - sg;
     for (int i = 0; i < depth; i++) {
         if (a_len > b_len) {
             b0+=a0;
@@ -226,10 +237,11 @@ void MOS::adjustTuningG(int depth, int m, double g, double e, int _repetitions){
 }
 
 MOS MOS::fromG(int depth, int m, double g, double e, int repetitions){
+    double sg = sanitize_generator(g);
     int a0 = 1;
     int b0 = 1;
-    double a_len = g;
-    double b_len = 1.0 - g;
+    double a_len = sg;
+    double b_len = 1.0 - sg;
     for (int i = 0; i < depth; i++) {
         if (a_len > b_len) {
             b0+=a0;
