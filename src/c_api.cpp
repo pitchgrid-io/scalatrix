@@ -92,6 +92,10 @@ int scalatrix_mos_node_accidental(const scalatrix_mos_t* m, scalatrix_vec2i v) {
     return MOS_PTR(m)->nodeAccidental(from_c(v));
 }
 
+double scalatrix_mos_pitch_height(scalatrix_mos_t* mos, double x, double y) {
+    return MOS_MUT(mos)->pitchHeight(x, y);
+}
+
 double scalatrix_mos_coord_to_freq(
     scalatrix_mos_t* mos, double x, double y, double base_freq)
 {

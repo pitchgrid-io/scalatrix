@@ -149,8 +149,12 @@ void MOS::updateStructureVectors(){
     this->structure_chroma_vec = this->structure_L_vec - this->structure_s_vec;
 }
 
+double MOS::pitchHeight(double x, double y){
+    return (this->impliedAffine * Vector2d(x,y)).x;
+}
+
 double MOS::coordToFreq(double x, double y, double base_freq){
-    return base_freq * std::exp2((this->impliedAffine * Vector2d(x,y)).x);
+    return base_freq * std::exp2(pitchHeight(x, y));
 }
 
 void MOS::adjustParams(int a, int b, int m, double e, double g, int repetitions){

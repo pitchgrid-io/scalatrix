@@ -206,6 +206,11 @@ impl Mos {
         unsafe { ffi::scalatrix_mos_node_accidental(self.ptr, v.into()) }
     }
 
+    /// Pitch height in log2 frequency units (x-component of impliedAffine * (x, y)).
+    pub fn pitch_height(&mut self, x: f64, y: f64) -> f64 {
+        unsafe { ffi::scalatrix_mos_pitch_height(self.ptr, x, y) }
+    }
+
     /// Convert lattice coordinates to frequency.
     pub fn coord_to_freq(&mut self, x: f64, y: f64, base_freq: f64) -> f64 {
         unsafe { ffi::scalatrix_mos_coord_to_freq(self.ptr, x, y, base_freq) }

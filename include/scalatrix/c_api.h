@@ -73,6 +73,7 @@ int  scalatrix_mos_node_scale_degree(const scalatrix_mos_t* mos, scalatrix_vec2i
 int  scalatrix_mos_node_equave_nr(const scalatrix_mos_t* mos, scalatrix_vec2i v);
 int  scalatrix_mos_node_accidental(const scalatrix_mos_t* mos, scalatrix_vec2i v);
 
+double scalatrix_mos_pitch_height(scalatrix_mos_t* mos, double x, double y);
 double scalatrix_mos_coord_to_freq(
     scalatrix_mos_t* mos, double x, double y, double base_freq);
 

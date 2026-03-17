@@ -43,6 +43,7 @@ public:
 
     //void adjustParamsFromImpliedAffine(const AffineTransform& A);
 
+    double pitchHeight(double x, double y);
     double coordToFreq(double x, double y, double base_freq);
 
     double angle() const;

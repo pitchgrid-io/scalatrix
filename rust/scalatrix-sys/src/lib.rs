@@ -115,6 +115,10 @@ extern "C" {
         mos: *const scalatrix_mos_t, v: scalatrix_vec2i,
     ) -> c_int;
 
+    pub fn scalatrix_mos_pitch_height(
+        mos: *mut scalatrix_mos_t, x: f64, y: f64,
+    ) -> f64;
+
     pub fn scalatrix_mos_coord_to_freq(
         mos: *mut scalatrix_mos_t, x: f64, y: f64, base_freq: f64,
     ) -> f64;
