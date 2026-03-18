@@ -212,17 +212,13 @@ PYBIND11_MODULE(scalatrix, m) {
         .def_readwrite("cents", &PLCurve::cents)
         .def_readwrite("pl", &PLCurve::pl);
 
-    py::class_<HullResult>(m, "HullResult")
-        .def_readwrite("cents", &HullResult::cents)
-        .def_readwrite("pl", &HullResult::pl)
-        .def_readwrite("hull", &HullResult::hull)
-        .def_readwrite("spiky", &HullResult::spiky);
-
-    py::class_<PyramidResult>(m, "PyramidResult")
-        .def_readwrite("cents", &PyramidResult::cents)
-        .def_readwrite("pyramid", &PyramidResult::pyramid)
-        .def_readwrite("consonance", &PyramidResult::consonance)
-        .def_readwrite("peak", &PyramidResult::peak);
+    py::class_<ConsonanceCurve>(m, "ConsonanceCurve")
+        .def_readwrite("cents", &ConsonanceCurve::cents)
+        .def_readwrite("pl", &ConsonanceCurve::pl)
+        .def_readwrite("hull", &ConsonanceCurve::hull)
+        .def_readwrite("spiky", &ConsonanceCurve::spiky)
+        .def_readwrite("consonance", &ConsonanceCurve::consonance)
+        .def_readwrite("peak", &ConsonanceCurve::peak);
 
     py::class_<IntervalConsonance>(m, "IntervalConsonance")
         .def_readwrite("name", &IntervalConsonance::name)
@@ -237,16 +233,12 @@ PYBIND11_MODULE(scalatrix, m) {
     m.def("computePLCurve", &computePLCurve,
         py::arg("spectrum"), py::arg("f0"),
         py::arg("cents_min"), py::arg("cents_max"), py::arg("resolution") = 0.5);
-    m.def("computeHull3", &computeHull3,
-        py::arg("pl_curve"), py::arg("order") = 3, py::arg("spike_threshold") = 0.005);
-    m.def("computeHull4", &computeHull4,
-        py::arg("pl_curve"), py::arg("order") = 5, py::arg("sharpness_threshold") = 0.001);
-    m.def("consonanceValue", &consonanceValue, py::arg("spiky_normalized"));
-    m.def("computePyramidCurve", &computePyramidCurve,
+    m.def("computeConsonanceCurve", &computeConsonanceCurve,
         py::arg("spectrum"), py::arg("f0"),
         py::arg("cents_min"), py::arg("cents_max"),
         py::arg("resolution") = 0.5, py::arg("logBaseline") = 0.5);
     m.def("analyzeScale", &analyzeScale,
         py::arg("spectrum"), py::arg("f0"), py::arg("intervals"),
-        py::arg("max_cents") = 2000.0, py::arg("max_interval_cents") = 1950.0);
+        py::arg("max_cents") = 2000.0, py::arg("max_interval_cents") = 1950.0,
+        py::arg("logBaseline") = 0.5);
 }

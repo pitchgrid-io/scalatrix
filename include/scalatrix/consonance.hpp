@@ -13,11 +13,13 @@ struct PLCurve {
     std::vector<double> pl;
 };
 
-struct HullResult {
+struct ConsonanceCurve {
     std::vector<double> cents;
-    std::vector<double> pl;
-    std::vector<double> hull;
-    std::vector<double> spiky;
+    std::vector<double> pl;         // PL dissonance curve
+    std::vector<double> hull;       // flat-topped PL (dips filled)
+    std::vector<double> spiky;      // hull - pl (exact pyramids)
+    std::vector<double> consonance; // log-transformed: max(0, 1 + logBaseline * log10(spiky/peak))
+    double peak;                    // peak spiky value (at unison)
 };
 
 struct IntervalConsonance {
@@ -36,33 +38,18 @@ struct ConsonanceResult {
 PLCurve computePLCurve(const Spectrum& spectrum, double f0,
                        double cents_min, double cents_max, double resolution = 0.5);
 
-/// Compute Hull₃ from PL curve
-HullResult computeHull3(const PLCurve& pl_curve, int order = 3, double spike_threshold = 0.005);
-
-/// Compute Hull₄ (selective spiky): symmetric regions around spike minima
-HullResult computeHull4(const PLCurve& pl_curve, int order = 5, double sharpness_threshold = 0.001);
-
-/// Consonance value from normalized spiky
-double consonanceValue(double spiky_normalized);
-
-/// Pyramid consonance result
-struct PyramidResult {
-    std::vector<double> cents;
-    std::vector<double> pyramid;     // summed pyramid values (linear)
-    std::vector<double> consonance;  // log-transformed
-    double peak;                     // peak pyramid value
-};
-
-/// Compute pyramid consonance curve analytically from partials
-/// logBaseline controls the log formula: C = max(0, 1 + logBaseline * log10(pyr/peak))
-PyramidResult computePyramidCurve(const Spectrum& spectrum, double f0,
+/// Compute consonance curve: PL, hull (flat-topped PL), spiky (exact pyramids), consonance
+/// Uses exact asymmetric pyramids derived from PL atomic curve shape.
+/// Each partial pair's dip is analytically filled to produce the hull.
+ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
     double cents_min, double cents_max, double resolution = 0.5,
     double logBaseline = 0.5);
 
-/// Full scale analysis
+/// Full scale analysis: compute consonance at each interval
 ConsonanceResult analyzeScale(const Spectrum& spectrum, double f0,
     const std::vector<std::pair<std::string, double>>& intervals,
-    double max_cents = 2000.0, double max_interval_cents = 1950.0);
+    double max_cents = 2000.0, double max_interval_cents = 1950.0,
+    double logBaseline = 0.5);
 
 } // namespace scalatrix
 
