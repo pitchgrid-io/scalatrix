@@ -233,6 +233,8 @@ PYBIND11_MODULE(scalatrix, m) {
         py::arg("cents_min"), py::arg("cents_max"), py::arg("resolution") = 0.5);
     m.def("computeHull3", &computeHull3,
         py::arg("pl_curve"), py::arg("order") = 3, py::arg("spike_threshold") = 0.005);
+    m.def("computeHull4", &computeHull4,
+        py::arg("pl_curve"), py::arg("order") = 5, py::arg("sharpness_threshold") = 0.005);
     m.def("consonanceValue", &consonanceValue, py::arg("spiky_normalized"));
     m.def("analyzeScale", &analyzeScale,
         py::arg("spectrum"), py::arg("f0"), py::arg("intervals"),

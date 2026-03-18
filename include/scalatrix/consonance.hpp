@@ -39,6 +39,9 @@ PLCurve computePLCurve(const Spectrum& spectrum, double f0,
 /// Compute Hull₃ from PL curve
 HullResult computeHull3(const PLCurve& pl_curve, int order = 3, double spike_threshold = 0.005);
 
+/// Compute Hull₄ (selective spiky): symmetric regions around spike minima
+HullResult computeHull4(const PLCurve& pl_curve, int order = 5, double sharpness_threshold = 0.005);
+
 /// Consonance value from normalized spiky
 double consonanceValue(double spiky_normalized);
 
