@@ -121,12 +121,62 @@ ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
     // Find peak spiky (at unison)
     result.peak = *std::max_element(result.spiky.begin(), result.spiky.end());
 
+    // Auto-compute logBaseline if <= 0: find value where |logBaseline| fraction maps to zero
+    result.logBaseline = logBaseline;
+    double effectiveLogBaseline = logBaseline;
+    if (logBaseline <= 0.0 && result.peak > 0.0) {
+        double targetFraction = (logBaseline < 0.0) ? -logBaseline : 0.5;
+        targetFraction = std::clamp(targetFraction, 0.01, 0.99);
+
+        // Find the threshold: the value at the targetFraction percentile
+        // Using nth_element for O(n) median finding
+        std::vector<double> sorted_spiky(result.spiky);
+        int target_idx = static_cast<int>(targetFraction * (n_points - 1));
+        std::nth_element(sorted_spiky.begin(), sorted_spiky.begin() + target_idx, sorted_spiky.end());
+        double threshold = sorted_spiky[target_idx];
+
+        if (threshold > 0.0) {
+            // logBaseline = -1 / log10(threshold / peak)
+            double ratio = threshold / result.peak;
+            effectiveLogBaseline = -1.0 / std::log10(ratio);
+        } else {
+            // More than targetFraction of points are already zero
+            // Find the smallest nonzero spiky value above the target
+            int n_zero = 0;
+            for (int i = 0; i < n_points; ++i)
+                if (result.spiky[i] <= 0.0) ++n_zero;
+
+            if (n_zero < n_points) {
+                // Collect nonzero values
+                std::vector<double> nonzero;
+                nonzero.reserve(n_points - n_zero);
+                for (int i = 0; i < n_points; ++i)
+                    if (result.spiky[i] > 0.0) nonzero.push_back(result.spiky[i]);
+
+                // We need (targetFraction * n_points - n_zero) additional points to be cut
+                int additional_cut = static_cast<int>(targetFraction * n_points) - n_zero;
+                if (additional_cut > 0 && additional_cut < static_cast<int>(nonzero.size())) {
+                    std::nth_element(nonzero.begin(), nonzero.begin() + additional_cut, nonzero.end());
+                    double t = nonzero[additional_cut];
+                    double ratio = t / result.peak;
+                    effectiveLogBaseline = -1.0 / std::log10(ratio);
+                } else {
+                    // Already exceeds target or no nonzero values to cut
+                    effectiveLogBaseline = 0.5; // fallback
+                }
+            } else {
+                effectiveLogBaseline = 0.5; // fallback: all zero
+            }
+        }
+        result.logBaseline = effectiveLogBaseline;
+    }
+
     // Compute consonance: max(0, 1 + logBaseline * log10(spiky/peak))
     if (result.peak > 0.0) {
         for (int i = 0; i < n_points; ++i) {
             if (result.spiky[i] > 0.0) {
                 double norm = result.spiky[i] / result.peak;
-                double c = 1.0 + logBaseline * std::log10(norm);
+                double c = 1.0 + effectiveLogBaseline * std::log10(norm);
                 result.consonance[i] = std::max(0.0, c);
             }
         }

@@ -218,7 +218,8 @@ PYBIND11_MODULE(scalatrix, m) {
         .def_readwrite("hull", &ConsonanceCurve::hull)
         .def_readwrite("spiky", &ConsonanceCurve::spiky)
         .def_readwrite("consonance", &ConsonanceCurve::consonance)
-        .def_readwrite("peak", &ConsonanceCurve::peak);
+        .def_readwrite("peak", &ConsonanceCurve::peak)
+        .def_readwrite("logBaseline", &ConsonanceCurve::logBaseline);
 
     py::class_<IntervalConsonance>(m, "IntervalConsonance")
         .def_readwrite("name", &IntervalConsonance::name)

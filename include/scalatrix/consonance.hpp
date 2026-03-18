@@ -20,6 +20,7 @@ struct ConsonanceCurve {
     std::vector<double> spiky;      // hull - pl (exact pyramids)
     std::vector<double> consonance; // log-transformed: max(0, 1 + logBaseline * log10(spiky/peak))
     double peak;                    // peak spiky value (at unison)
+    double logBaseline;             // logBaseline used (may differ from input if auto-computed)
 };
 
 struct IntervalConsonance {
@@ -41,6 +42,9 @@ PLCurve computePLCurve(const Spectrum& spectrum, double f0,
 /// Compute consonance curve: PL, hull (flat-topped PL), spiky (exact pyramids), consonance
 /// Uses exact asymmetric pyramids derived from PL atomic curve shape.
 /// Each partial pair's dip is analytically filled to produce the hull.
+/// logBaseline > 0: use this value directly
+/// logBaseline <= 0: auto-compute so that |logBaseline| fraction of x-axis maps to zero
+///                   (default auto target = 0.5, i.e. 50% cutoff)
 ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
     double cents_min, double cents_max, double resolution = 0.5,
     double logBaseline = 0.5);
