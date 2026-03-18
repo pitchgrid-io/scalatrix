@@ -40,10 +40,24 @@ PLCurve computePLCurve(const Spectrum& spectrum, double f0,
 HullResult computeHull3(const PLCurve& pl_curve, int order = 3, double spike_threshold = 0.005);
 
 /// Compute Hull₄ (selective spiky): symmetric regions around spike minima
-HullResult computeHull4(const PLCurve& pl_curve, int order = 5, double sharpness_threshold = 0.005);
+HullResult computeHull4(const PLCurve& pl_curve, int order = 5, double sharpness_threshold = 0.001);
 
 /// Consonance value from normalized spiky
 double consonanceValue(double spiky_normalized);
+
+/// Pyramid consonance result
+struct PyramidResult {
+    std::vector<double> cents;
+    std::vector<double> pyramid;     // summed pyramid values (linear)
+    std::vector<double> consonance;  // log-transformed
+    double peak;                     // peak pyramid value
+};
+
+/// Compute pyramid consonance curve analytically from partials
+/// logBaseline controls the log formula: C = max(0, 1 + logBaseline * log10(pyr/peak))
+PyramidResult computePyramidCurve(const Spectrum& spectrum, double f0,
+    double cents_min, double cents_max, double resolution = 0.5,
+    double logBaseline = 0.5);
 
 /// Full scale analysis
 ConsonanceResult analyzeScale(const Spectrum& spectrum, double f0,

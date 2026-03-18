@@ -272,7 +272,7 @@ HullResult computeHull4(const PLCurve& pl_curve, int order, double sharpness_thr
 
     // Find PL local minima and maxima
     auto min_indices = findLocalMinima(pl_curve.pl, order);
-    auto max_indices = findLocalMaxima(pl_curve.pl, order);
+    auto max_indices = findLocalMaxima(pl_curve.pl, 1);
 
     // Add endpoints to maxima if needed
     if (max_indices.empty() || max_indices.front() > ep_margin) {
@@ -435,6 +435,74 @@ ConsonanceResult analyzeScale(const Spectrum& spectrum, double f0,
 
     result.mean_consonance = result.intervals.empty() ? 0.0 :
         result.total_consonance / result.intervals.size();
+    return result;
+}
+
+PyramidResult computePyramidCurve(const Spectrum& spectrum, double f0,
+    double cents_min, double cents_max, double resolution, double logBaseline)
+{
+    int n_points = static_cast<int>((cents_max - cents_min) / resolution) + 1;
+    PyramidResult result;
+    result.cents.resize(n_points);
+    result.pyramid.resize(n_points, 0.0);
+    result.consonance.resize(n_points, 0.0);
+
+    for (int i = 0; i < n_points; ++i)
+        result.cents[i] = cents_min + i * (cents_max - cents_min) / (n_points - 1);
+
+    const double ln2 = std::log(2.0);
+    const double slopeConst = (C1_PL * A1 + C2_PL * A2); // = 11.20
+    const auto& partials = spectrum.partials;
+    size_t np = partials.size();
+
+    auto addPyramid = [&](double center, double strength, double f_low) {
+        double s = DSTAR / (S1 * f_low + S2);
+        double slope = s * slopeConst * f_low * ln2 / 1200.0;
+        if (slope <= 0.0) return;
+        double half_w = 1.0 / slope;
+
+        // Only touch points within the triangle
+        int i_lo = std::max(0, static_cast<int>((center - half_w - cents_min) / resolution));
+        int i_hi = std::min(n_points - 1, static_cast<int>((center + half_w - cents_min) / resolution) + 1);
+
+        for (int i = i_lo; i <= i_hi; ++i) {
+            double dist = std::abs(result.cents[i] - center);
+            double val = strength * (1.0 - dist * slope);
+            if (val > 0.0)
+                result.pyramid[i] += val;
+        }
+    };
+
+    // Unison: each partial's self-interaction
+    for (size_t i = 0; i < np; ++i)
+        addPyramid(0.0, partials[i].amplitude, f0 * partials[i].ratio);
+
+    // Non-unison pairs
+    for (size_t i = 0; i < np; ++i) {
+        for (size_t j = 0; j < np; ++j) {
+            if (partials[i].ratio <= partials[j].ratio)
+                continue;
+            double spike_cents = 1200.0 * std::log2(partials[i].ratio / partials[j].ratio);
+            double strength = std::min(partials[i].amplitude, partials[j].amplitude);
+            double f_low = f0 * partials[j].ratio;
+            addPyramid(spike_cents, strength, f_low);
+        }
+    }
+
+    // Find peak
+    result.peak = *std::max_element(result.pyramid.begin(), result.pyramid.end());
+
+    // Compute consonance: max(0, 1 + logBaseline * log10(pyr/peak))
+    if (result.peak > 0.0) {
+        for (int i = 0; i < n_points; ++i) {
+            if (result.pyramid[i] > 0.0) {
+                double norm = result.pyramid[i] / result.peak;
+                double c = 1.0 + logBaseline * std::log10(norm);
+                result.consonance[i] = std::max(0.0, c);
+            }
+        }
+    }
+
     return result;
 }
 
