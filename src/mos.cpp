@@ -362,9 +362,10 @@ Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n
     squeezed_t.ty = mos_offset;
     Scale scale = Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
 
-    // Retune nodes using impliedAffine (tuning generator) for correct pitches
+    // Retune pitches using impliedAffine (tuning generator), but preserve
+    // strip y-coordinate from squeezed_t (which includes modeOffset)
     for (auto& node : scale.getNodes()) {
-        node.tuning_coord = impliedAffine * node.natural_coord;
+        node.tuning_coord.x = (impliedAffine * node.natural_coord).x;
         node.pitch = base_freq * std::exp2(node.tuning_coord.x);
     }
 
