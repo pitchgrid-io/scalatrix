@@ -4,6 +4,7 @@
 //! 1. Receive tuning/mapping data from the PitchGrid plugin via OSC
 //! 2. Instantiate a MOS scale system from the received parameters
 //! 3. Generate a mapped scale and inspect the resulting nodes
+//! 4. Receive forwarded spectrum and consonance data
 //!
 //! The PitchGrid plugin sends two OSC messages on each parameter change:
 //!
@@ -12,13 +13,19 @@
 //!
 //! Both messages carry the same 8 arguments:
 //!   (mode: i32, root_freq: f32, stretch: f32, skew: f32,
-//!    mode_offset: i32, steps: i32, mos_a: i32, mos_b: i32)
+//!    mode_offset: f32, steps: i32, mos_a: i32, mos_b: i32)
+//!
+//! Additionally, the plugin forwards synth analysis data:
+//!
+//! - `/pitchgrid/plugin/spectrum`    — pairs of (ratio: f32, weight: f32)
+//! - `/pitchgrid/plugin/consonance` — triplets of (natX: i32, natY: i32, consonance: f32)
 //!
 //! ## Protocol
 //!
 //! - Receiver binds to an ephemeral port and sends heartbeats to the plugin
 //!   on port 34562: `/pitchgrid/heartbeat [1, <my_port>]`
-//! - Plugin registers the receiver and sends data to `<my_port>`
+//! - Plugin registers the receiver and sends cached state (tuning, mapping,
+//!   spectrum, consonance) immediately on first heartbeat
 //! - Plugin sends its own heartbeat: `/pitchgrid/heartbeat [1]`
 //! - Both sides consider the connection dead after 2s without a heartbeat
 //! - Up to 9 receivers can connect simultaneously
@@ -42,14 +49,14 @@ struct PitchGridParams {
     root_freq: f64,
     stretch: f64,
     skew: f64,
-    mode_offset: i32,
+    mode_offset: f64,
     steps: i32,
     mos_a: i32,
     mos_b: i32,
 }
 
 impl PitchGridParams {
-    /// Try to parse from OSC args: (i32, f32, f32, f32, i32, i32, i32, i32)
+    /// Try to parse from OSC args: (i32, f32, f32, f32, f32, i32, i32, i32)
     fn from_osc_args(args: &[OscType]) -> Option<Self> {
         if args.len() < 8 {
             return None;
@@ -59,7 +66,7 @@ impl PitchGridParams {
             root_freq:   args[1].clone().float()? as f64,
             stretch:     args[2].clone().float()? as f64,
             skew:        args[3].clone().float()? as f64,
-            mode_offset: args[4].clone().int()?,
+            mode_offset: args[4].clone().float()? as f64,
             steps:       args[5].clone().int()?,
             mos_a:       args[6].clone().int()?,
             mos_b:       args[7].clone().int()?,
@@ -97,7 +104,7 @@ fn process_mapping(params: &PitchGridParams) {
     // Generate the MIDI-mapped scale
     let scale = mos.generate_mapped_scale(
         params.steps,
-        params.mode_offset as f64,
+        params.mode_offset,
         params.root_freq,
         128,  // MIDI range
         60,   // root = middle C
@@ -105,7 +112,7 @@ fn process_mapping(params: &PitchGridParams) {
 
     println!("  Scale: {} nodes, root at index {}", scale.len(), scale.root_idx());
 
-    // Build coord → index lookup (what downstream apps need for MIDI mapping)
+    // Build coord -> index lookup (what downstream apps need for MIDI mapping)
     let coord_map = scale.coord_to_index();
     println!("  Mapped {} unique coordinates", coord_map.len());
 
@@ -118,6 +125,47 @@ fn process_mapping(params: &PitchGridParams) {
             println!("    [{:3}] ({:3}, {:3}) -> {:10.4} Hz  in_scale={}",
                 i, node.natural_coord.x, node.natural_coord.y, node.pitch, in_scale);
         }
+    }
+    println!();
+}
+
+/// Process spectrum data: list of (ratio, weight) pairs.
+fn process_spectrum(args: &[OscType]) {
+    let mut partials = Vec::new();
+    let mut i = 0;
+    while i + 1 < args.len() {
+        if let (Some(ratio), Some(weight)) = (args[i].clone().float(), args[i + 1].clone().float()) {
+            partials.push((ratio, weight));
+        }
+        i += 2;
+    }
+    println!("[spectrum] {} partials", partials.len());
+    for (j, (ratio, weight)) in partials.iter().enumerate().take(8) {
+        println!("    [{j}] ratio={ratio:.4}, weight={weight:.4}");
+    }
+    if partials.len() > 8 {
+        println!("    ... and {} more", partials.len() - 8);
+    }
+    println!();
+}
+
+/// Process consonance data: list of (natX, natY, consonance) triplets.
+fn process_consonance(args: &[OscType]) {
+    let mut nodes = Vec::new();
+    let mut i = 0;
+    while i + 2 < args.len() {
+        if let (Some(x), Some(y), Some(c)) = (
+            args[i].clone().int(),
+            args[i + 1].clone().int(),
+            args[i + 2].clone().float(),
+        ) {
+            nodes.push((x, y, c));
+        }
+        i += 3;
+    }
+    println!("[consonance] {} nodes", nodes.len());
+    for (x, y, c) in &nodes {
+        println!("    ({x:3}, {y:3}) = {c:.4}");
     }
     println!();
 }
@@ -137,7 +185,7 @@ fn main() {
         .set_read_timeout(Some(Duration::from_millis(500)))
         .unwrap();
 
-    let mut buf = [0u8; 2048];
+    let mut buf = [0u8; 4096];
     let mut last_heartbeat_sent = Instant::now();
     let mut last_heartbeat_recv = Instant::now();
     let heartbeat_interval = Duration::from_secs(1);
@@ -161,6 +209,7 @@ fn main() {
         connected = last_heartbeat_recv.elapsed() < connection_timeout;
         if was_connected && !connected {
             println!("[status] Disconnected from plugin");
+            last_mapping = None; // Reset dedup so reconnect processes fresh data
         } else if !was_connected && connected {
             println!("[status] Connected to plugin");
         }
@@ -186,7 +235,7 @@ fn main() {
                         "/pitchgrid/plugin/tuning" => {
                             last_heartbeat_recv = Instant::now();
                             if let Some(params) = PitchGridParams::from_osc_args(&msg.args) {
-                                println!("[tuning] mode={}, root={:.2}Hz, stretch={:.6}, skew={:.6}, offset={}, steps={}, mos=({},{})",
+                                println!("[tuning] mode={}, root={:.2}Hz, stretch={:.6}, skew={:.6}, offset={:.2}, steps={}, mos=({},{})",
                                     params.mode, params.root_freq, params.stretch, params.skew,
                                     params.mode_offset, params.steps, params.mos_a, params.mos_b);
                             }
@@ -198,13 +247,23 @@ fn main() {
                                 // Dedup: only process if params actually changed
                                 let key = format!("{:?}", params);
                                 if last_mapping.as_ref() != Some(&key) {
-                                    println!("[mapping] mode={}, root={:.2}Hz, stretch={:.6}, skew={:.6}, offset={}, steps={}, mos=({},{})",
+                                    println!("[mapping] mode={}, root={:.2}Hz, stretch={:.6}, skew={:.6}, offset={:.2}, steps={}, mos=({},{})",
                                         params.mode, params.root_freq, params.stretch, params.skew,
                                         params.mode_offset, params.steps, params.mos_a, params.mos_b);
                                     process_mapping(&params);
                                     last_mapping = Some(key);
                                 }
                             }
+                        }
+
+                        "/pitchgrid/plugin/spectrum" => {
+                            last_heartbeat_recv = Instant::now();
+                            process_spectrum(&msg.args);
+                        }
+
+                        "/pitchgrid/plugin/consonance" => {
+                            last_heartbeat_recv = Instant::now();
+                            process_consonance(&msg.args);
                         }
 
                         addr => {
