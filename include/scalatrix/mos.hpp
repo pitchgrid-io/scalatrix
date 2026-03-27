@@ -7,6 +7,10 @@
 
 namespace scalatrix {
 
+// Free functions for Stern-Brocot path coordinate conversion
+Vector2i applyPath(const std::vector<bool> path, const Vector2i& v);
+Vector2i applyPathReverse(const std::vector<bool> path, const Vector2i& v);
+
 class MOS {
 public:
 
@@ -74,6 +78,10 @@ public:
     void retuneScaleWithMOS(Scale& scale, double base_freq);
 
     Vector2i mapFromMOS(MOS& other, Vector2i v);
+
+    // Convert between this MOS's coordinate system and root (1,1) coordinates
+    Vector2i toRootCoord(Vector2i v) const { return applyPathReverse(path, v); }
+    Vector2i fromRootCoord(Vector2i v) const { return applyPath(path, v); }
 
     int nodeEquaveNr(Vector2i v) const {return (v.x + v.y + 256*n) / n - 256;}
     int nodeScaleDegree(Vector2i v) const {return (v.x + v.y + 256*n) % n;}

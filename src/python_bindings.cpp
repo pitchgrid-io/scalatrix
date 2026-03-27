@@ -155,6 +155,8 @@ PYBIND11_MODULE(scalatrix, m) {
         .def("generateMappedScale", &MOS::generateMappedScale)
         .def("retuneScaleWithMOS", &MOS::retuneScaleWithMOS)
         .def("mapFromMOS", &MOS::mapFromMOS)
+        .def("toRootCoord", &MOS::toRootCoord)
+        .def("fromRootCoord", &MOS::fromRootCoord)
         .def("nodeInScale", &MOS::nodeInScale)
         .def("nodeEquaveNr", &MOS::nodeEquaveNr)
         .def("nodeScaleDegree", &MOS::nodeScaleDegree)

@@ -67,6 +67,8 @@ EMSCRIPTEN_BINDINGS(scalatrix) {
         .function("nodeAccidental", &MOS::nodeAccidental)
         .function("mosCoordFromNotation", &MOS::mosCoordFromNotation)
         .function("mapFromMOS", &MOS::mapFromMOS)
+        .function("toRootCoord", &MOS::toRootCoord)
+        .function("fromRootCoord", &MOS::fromRootCoord)
         .property("L_vec", &MOS::L_vec)
         .property("s_vec", &MOS::s_vec)
         .property("chroma_vec", &MOS::chroma_vec)
