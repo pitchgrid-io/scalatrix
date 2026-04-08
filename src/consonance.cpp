@@ -14,13 +14,13 @@ static constexpr double C2_PL = -5.0;
 static constexpr double A1 = -3.51;
 static constexpr double A2 = -5.75;
 
-// sf_max: position of maximum dissonance in the atomic PL curve
-// g(sf) = C1*exp(A1*sf) + C2*exp(A2*sf), g'(sf) = 0 at sf_max
-// sf_max = ln(-C2*A2 / (C1*A1)) / (A1 - A2)
-static const double SF_MAX = std::log((-C2_PL * A2) / (C1_PL * A1)) / (A1 - A2);
-
-// d_flat: atomic dissonance value at sf_max (the plateau value)
-static const double D_FLAT = C1_PL * std::exp(A1 * SF_MAX) + C2_PL * std::exp(A2 * SF_MAX);
+// Generation 3 analytic decomposition:
+// Decompose the PL atom g(sf) = C1*exp(A1*sf) + C2*exp(A2*sf) as L + H, where
+//   L(sf) = alpha * exp(A2*sf)  (the fast-decaying "local consonance" component)
+//   H(sf) = C1*exp(A1*sf) + (C2 - alpha)*exp(A2*sf)  (smooth hull)
+// requiring H'(0) = 0 -> C1*A1 + (C2 - alpha)*A2 = 0 -> alpha = C2 + C1*A1/A2.
+// LOCAL_CONS_AMP = -alpha is the per-pair local-consonance peak at sf = 0.
+static constexpr double LOCAL_CONS_AMP = -(C2_PL + C1_PL * A1 / A2);
 
 static double computeDissonanceAtCents(const Spectrum& spectrum, double f0, double cents) {
     double ratio = std::pow(2.0, cents / 1200.0);
@@ -87,8 +87,9 @@ ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
         result.pl[i] = computeDissonanceAtCents(spectrum, f0, result.cents[i]);
     }
 
-    // Compute exact asymmetric pyramids (spiky = d_flat - d for each pair where sf < SF_MAX)
-    // For each pair of (base partial i, transposed partial j):
+    // Generation 3: per-pair local-consonance sum.
+    // For each pair, contribute a_min * LOCAL_CONS_AMP * exp(A2 * sf) to spiky.
+    // No cutoff needed: the analytic decomposition is global and continuous.
     const auto& partials = spectrum.partials;
     size_t np = partials.size();
 
@@ -96,6 +97,7 @@ ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
         for (size_t pj = 0; pj < np; ++pj) {
             double f_base = f0 * partials[pi].ratio;
             double a_min = std::min(partials[pi].amplitude, partials[pj].amplitude);
+            double a_scaled = a_min * LOCAL_CONS_AMP;
 
             for (int ci = 0; ci < n_points; ++ci) {
                 double f_trans = f0 * cents_ratios[ci] * partials[pj].ratio;
@@ -104,10 +106,7 @@ ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
                 double s = DSTAR / (S1 * f_low + S2);
                 double sf = s * fdif;
 
-                if (sf < SF_MAX) {
-                    double d_normal = a_min * (C1_PL * std::exp(A1 * sf) + C2_PL * std::exp(A2 * sf));
-                    result.spiky[ci] += a_min * D_FLAT - d_normal;
-                }
+                result.spiky[ci] += a_scaled * std::exp(A2 * sf);
             }
         }
     }
