@@ -49,6 +49,14 @@ ConsonanceCurve computeConsonanceCurve(const Spectrum& spectrum, double f0,
     double cents_min, double cents_max, double resolution = 0.5,
     double logBaseline = 0.5);
 
+/// Compute consonance curve using generation 3 analytic decomposition.
+/// Same interface/output as computeConsonanceCurve, but decomposes each PL atom
+/// into a fast-decaying local-consonance term and a smooth hull (with H'(0) = 0).
+/// No sf < sf_max cutoff — the decomposition is global and continuous.
+ConsonanceCurve computeConsonanceCurveGen3(const Spectrum& spectrum, double f0,
+    double cents_min, double cents_max, double resolution = 0.5,
+    double logBaseline = 0.5);
+
 /// Full scale analysis: compute consonance at each interval
 ConsonanceResult analyzeScale(const Spectrum& spectrum, double f0,
     const std::vector<std::pair<std::string, double>>& intervals,
