@@ -3,11 +3,25 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <string>
 
 const int PRIMES[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97};
 
 
 namespace scalatrix {
+
+// Non-throwing strict integer parse (replaces std::stoi + try/catch so the
+// library builds on MCUs with -fno-exceptions). Returns false unless `s` is a
+// full, valid decimal integer.
+static bool parseIntStrict(const std::string& s, int& out) {
+    if (s.empty()) return false;
+    char* end = nullptr;
+    long v = std::strtol(s.c_str(), &end, 10);
+    if (end != s.c_str() + s.size()) return false;
+    out = static_cast<int>(v);
+    return true;
+}
 
 PseudoPrimeInt pseudoPrimeFromIndexNumber(unsigned int index) {
     PseudoPrimeInt p;
@@ -160,13 +174,12 @@ PitchSetPitch operator+(const PitchSetPitch& a, const PitchSetPitch& b) {
     auto parseRatio = [](const std::string& label) -> std::pair<bool, std::pair<int, int>> {
         size_t colonPos = label.find(':');
         if (colonPos != std::string::npos) {
-            try {
-                int num = std::stoi(label.substr(0, colonPos));
-                int den = std::stoi(label.substr(colonPos + 1));
+            int num, den;
+            if (parseIntStrict(label.substr(0, colonPos), num) &&
+                parseIntStrict(label.substr(colonPos + 1), den)) {
                 return {true, {num, den}};
-            } catch (...) {
-                return {false, {0, 0}};
             }
+            return {false, {0, 0}};
         }
         return {false, {0, 0}};
     };
@@ -174,13 +187,12 @@ PitchSetPitch operator+(const PitchSetPitch& a, const PitchSetPitch& b) {
     auto parseET = [](const std::string& label) -> std::pair<bool, std::pair<int, int>> {
         size_t backslashPos = label.find('\\');
         if (backslashPos != std::string::npos) {
-            try {
-                int num = std::stoi(label.substr(0, backslashPos));
-                int den = std::stoi(label.substr(backslashPos + 1));
+            int num, den;
+            if (parseIntStrict(label.substr(0, backslashPos), num) &&
+                parseIntStrict(label.substr(backslashPos + 1), den)) {
                 return {true, {num, den}};
-            } catch (...) {
-                return {false, {0, 0}};
             }
+            return {false, {0, 0}};
         }
         return {false, {0, 0}};
     };
@@ -223,13 +235,12 @@ PitchSetPitch operator*(const PitchSetPitch& pitch, int multiplier) {
     auto parseRatio = [](const std::string& label) -> std::pair<bool, std::pair<int, int>> {
         size_t colonPos = label.find(':');
         if (colonPos != std::string::npos) {
-            try {
-                int num = std::stoi(label.substr(0, colonPos));
-                int den = std::stoi(label.substr(colonPos + 1));
+            int num, den;
+            if (parseIntStrict(label.substr(0, colonPos), num) &&
+                parseIntStrict(label.substr(colonPos + 1), den)) {
                 return {true, {num, den}};
-            } catch (...) {
-                return {false, {0, 0}};
             }
+            return {false, {0, 0}};
         }
         return {false, {0, 0}};
     };
@@ -237,13 +248,12 @@ PitchSetPitch operator*(const PitchSetPitch& pitch, int multiplier) {
     auto parseET = [](const std::string& label) -> std::pair<bool, std::pair<int, int>> {
         size_t backslashPos = label.find('\\');
         if (backslashPos != std::string::npos) {
-            try {
-                int num = std::stoi(label.substr(0, backslashPos));
-                int den = std::stoi(label.substr(backslashPos + 1));
+            int num, den;
+            if (parseIntStrict(label.substr(0, backslashPos), num) &&
+                parseIntStrict(label.substr(backslashPos + 1), den)) {
                 return {true, {num, den}};
-            } catch (...) {
-                return {false, {0, 0}};
             }
+            return {false, {0, 0}};
         }
         return {false, {0, 0}};
     };

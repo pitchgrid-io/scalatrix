@@ -24,9 +24,16 @@ std::array<double, 6> LinearSolver6x6::solve(const std::array<std::array<double,
             }
         }
         
-        // Check for singular matrix
+        // Check for singular matrix. Desktop builds throw (unchanged); embedded
+        // builds compiled with -fno-exceptions return a zero fallback so the
+        // library links on MCUs (e.g. Teensy 4) where C++ exceptions are not
+        // available. A degenerate matrix arises only from degenerate inputs.
         if (max_val < 1e-10) {
+#if defined(__cpp_exceptions) && __cpp_exceptions
             throw std::runtime_error("Matrix is singular or nearly singular");
+#else
+            return std::array<double, 6>{};
+#endif
         }
         
         // Swap rows if needed
