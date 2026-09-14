@@ -35,14 +35,18 @@ public:
     static std::string deviationLabel(const Node& node, double thresholdCents = 0.1,
                                       bool compareWithTempered = false);
 
-    std::string noteLabelNormalized(MOS& mos, Vector2i v, bool override_letter_labels = false) {
-        if (mos.generator > 4.0/7 && mos.generator < 3.0/5 && mos.equave > 0.9 && mos.equave < 1.2 && !override_letter_labels)
-        {
-            Vector2i diatonic_coord = diatonic_mos.mapFromMOS (mos, v);
-            return nodeLabelLetter(diatonic_mos, diatonic_coord);
-        }
-        return nodeLabelDigit(mos, v);
-    }
+    // Meantone-fifth + near-octave window where 5L2s Western spelling applies.
+    static bool inDiatonicWindow(const MOS& mos);
+
+    // 12-TET pitch class of the nearest concert pitch to freqHz. C=0 … B=11.
+    // Spelling of that class is the unique name on the Db…F# fifths chain.
+    static int nearestWesternPitchClass(double freqHz);
+
+    // Map into 5L2s and label with C–G. If baseFreq is given, the origin is
+    // spelled as the nearest concert pitch in the Db…F# fifths range.
+    // Outside the diatonic window (or override_letter_labels), falls back to digits.
+    std::string noteLabelNormalized(MOS& mos, Vector2i v, bool override_letter_labels = false);
+    std::string noteLabelNormalized(MOS& mos, Vector2i v, double baseFreq, bool override_letter_labels = false);
 
     LabelCalculator() : diatonic_mos(MOS::fromParams (5, 2, 1, 1.0, .585)) {}
 
