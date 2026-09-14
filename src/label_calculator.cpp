@@ -2,6 +2,50 @@
 
 namespace scalatrix {
 
+namespace {
+
+constexpr double kConcertA4 = 440.0;
+// C4 is 9 semitones below A4.
+inline double concertC4() {
+    return kConcertA4 * std::exp2(-9.0 / 12.0);
+}
+
+// Natural scale-degree (C=0) and accidental of each 12-TET class, spelled
+// uniquely on the fifths chain from Db (−5) through C to F# (+6).
+constexpr int kWesternStep[12]  = {0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6};
+constexpr int kWesternAlter[12] = {0,-1, 0,-1, 0, 0, 1, 0,-1, 0,-1, 0};
+
+} // namespace
+
+bool LabelCalculator::inDiatonicWindow(const MOS& mos) {
+    return mos.generator > 4.0 / 7 && mos.generator < 3.0 / 5
+        && mos.equave > 0.9 && mos.equave < 1.2;
+}
+
+int LabelCalculator::nearestWesternPitchClass(double freqHz) {
+    const double semis = 12.0 * std::log2(freqHz / concertC4());
+    int n = static_cast<int>(std::floor(semis + 0.5));
+    int pc = n % 12;
+    if (pc < 0) pc += 12;
+    return pc;
+}
+
+std::string LabelCalculator::noteLabelNormalized(MOS& mos, Vector2i v, bool override_letter_labels) {
+    return noteLabelNormalized(mos, v, concertC4(), override_letter_labels);
+}
+
+std::string LabelCalculator::noteLabelNormalized(MOS& mos, Vector2i v, double baseFreq, bool override_letter_labels) {
+    if (!override_letter_labels && inDiatonicWindow(mos)) {
+        Vector2i diatonic_coord = diatonic_mos.mapFromMOS(mos, v);
+        const int pc = nearestWesternPitchClass(baseFreq);
+        if (pc != 0) {
+            diatonic_coord += diatonic_mos.mosCoordFromNotation(kWesternStep[pc], kWesternAlter[pc], 0);
+        }
+        return nodeLabelLetter(diatonic_mos, diatonic_coord);
+    }
+    return nodeLabelDigit(mos, v);
+}
+
 // ── Structure-based accidental (uses structure_L_vec) ────────────────────────
 
 std::string LabelCalculator::accidentalString(const MOS& mos, Vector2i v) {

@@ -1,6 +1,7 @@
 #include "catch2/catch_test_macros.hpp"
 #include "scalatrix/label_calculator.hpp"
 #include "scalatrix/mos.hpp"
+#include <cmath>
 
 using namespace scalatrix;
 
@@ -151,6 +152,69 @@ TEST_CASE("LabelCalculator deterministic behavior", "[labelcalculator]") {
         for (size_t i = 1; i < labels.size(); ++i) {
             REQUIRE(labels[i] == labels[0]);
         }
+    }
+}
+
+TEST_CASE("LabelCalculator diatonic window", "[labelcalculator]") {
+    SECTION("meantone fifth + octave is inside") {
+        MOS mos = MOS::fromParams(5, 2, 1, 1.0, 0.585);
+        REQUIRE(LabelCalculator::inDiatonicWindow(mos));
+    }
+
+    SECTION("fifth below 4/7 is outside") {
+        MOS mos = MOS::fromParams(5, 2, 1, 1.0, 0.55);
+        REQUIRE_FALSE(LabelCalculator::inDiatonicWindow(mos));
+    }
+}
+
+TEST_CASE("LabelCalculator nearestWesternPitchClass", "[labelcalculator]") {
+    const double c4 = 440.0 * std::exp2(-9.0 / 12.0);
+
+    SECTION("concert C is pitch class 0") {
+        REQUIRE(LabelCalculator::nearestWesternPitchClass(c4) == 0);
+    }
+
+    SECTION("51ct above C is Db (pc 1)") {
+        REQUIRE(LabelCalculator::nearestWesternPitchClass(c4 * std::exp2(51.0 / 1200.0)) == 1);
+    }
+
+    SECTION("49ct above C stays C (pc 0)") {
+        REQUIRE(LabelCalculator::nearestWesternPitchClass(c4 * std::exp2(49.0 / 1200.0)) == 0);
+    }
+
+    SECTION("tritone is F# (pc 6)") {
+        REQUIRE(LabelCalculator::nearestWesternPitchClass(c4 * std::exp2(0.5)) == 6);
+    }
+
+    SECTION("-51ct is B (pc 11)") {
+        REQUIRE(LabelCalculator::nearestWesternPitchClass(c4 * std::exp2(-51.0 / 1200.0)) == 11);
+    }
+}
+
+TEST_CASE("LabelCalculator western root follows concert pitch", "[labelcalculator]") {
+    LabelCalculator lc;
+    MOS mos = MOS::fromParams(5, 2, 1, 1.0, 0.585);
+    const double c4 = 440.0 * std::exp2(-9.0 / 12.0);
+    Vector2i origin(0, 0);
+
+    SECTION("default / concert C labels origin C") {
+        REQUIRE(lc.noteLabelNormalized(mos, origin) == "C");
+        REQUIRE(lc.noteLabelNormalized(mos, origin, c4) == "C");
+    }
+
+    SECTION("51ct above C labels origin D♭") {
+        const double f = c4 * std::exp2(51.0 / 1200.0);
+        REQUIRE(lc.noteLabelNormalized(mos, origin, f) == "D♭");
+    }
+
+    SECTION("49ct above C still labels origin C") {
+        const double f = c4 * std::exp2(49.0 / 1200.0);
+        REQUIRE(lc.noteLabelNormalized(mos, origin, f) == "C");
+    }
+
+    SECTION("tritone labels origin F♯") {
+        const double f = c4 * std::exp2(0.5);
+        REQUIRE(lc.noteLabelNormalized(mos, origin, f) == "F♯");
     }
 }
 
