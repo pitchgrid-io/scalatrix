@@ -77,7 +77,7 @@ std::vector<bool> calcPath(int a, int b){
 }
 
 
-Vector2i applyPath(const std::vector<bool> path, const Vector2i& v) {
+Vector2i applyPath(const std::vector<bool>& path, const Vector2i& v) {
     int a = v.x;
     int b = v.y;
     for (bool p : path) {
@@ -90,13 +90,12 @@ Vector2i applyPath(const std::vector<bool> path, const Vector2i& v) {
     return {a,b};
 }
 
-Vector2i applyPathReverse(const std::vector<bool> path, const Vector2i& v) {
+Vector2i applyPathReverse(const std::vector<bool>& path, const Vector2i& v) {
     int a = v.x;
     int b = v.y;
-    std::vector<bool> reversed_path = path;
-    std::reverse(reversed_path.begin(), reversed_path.end());
-    for (bool p : reversed_path) {
-        if (p) {
+    // Walk backwards. A reversed copy would allocate.
+    for (size_t i = path.size(); i-- > 0;) {
+        if (path[i]) {
             b -= a;
         } else {
             a -= b;

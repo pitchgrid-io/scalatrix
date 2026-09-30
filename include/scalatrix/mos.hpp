@@ -7,9 +7,11 @@
 
 namespace scalatrix {
 
-// Free functions for Stern-Brocot path coordinate conversion
-Vector2i applyPath(const std::vector<bool> path, const Vector2i& v);
-Vector2i applyPathReverse(const std::vector<bool> path, const Vector2i& v);
+// Stern-Brocot path coordinate conversion. The path is a reference:
+// copying `vector<bool>` allocates, and fromRootCoord runs on the
+// audio thread for every OSC note.
+Vector2i applyPath(const std::vector<bool>& path, const Vector2i& v);
+Vector2i applyPathReverse(const std::vector<bool>& path, const Vector2i& v);
 
 class MOS {
 public:

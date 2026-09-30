@@ -1,10 +1,31 @@
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/matchers/catch_matchers_floating_point.hpp"
 #include "scalatrix/mos.hpp"
+#include <atomic>
 #include <cmath>
+#include <cstdlib>
+#include <new>
 
 using namespace scalatrix;
 using Catch::Matchers::WithinAbs;
+
+namespace {
+
+std::atomic<int> allocHits{0};
+std::atomic<bool> countAlloc{false};
+
+} // namespace
+
+void* operator new(std::size_t n) {
+    if (countAlloc.load(std::memory_order_relaxed))
+        allocHits.fetch_add(1, std::memory_order_relaxed);
+    if (void* p = std::malloc(n))
+        return p;
+    throw std::bad_alloc();
+}
+
+void operator delete(void* p) noexcept { std::free(p); }
+void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 
 TEST_CASE("MOS construction from generator", "[mos]") {
     SECTION("Basic MOS from generator") {
@@ -208,6 +229,38 @@ TEST_CASE("MOS node labeling", "[mos]") {
         bool stepInScale = mos.nodeInScale({1, 0}) || mos.nodeInScale({0, 1});
         REQUIRE(stepInScale);
     }
+}
+
+TEST_CASE("root coordinates round-trip without copying the path", "[mos]") {
+    MOS scales[] = {
+        MOS::fromParams(5, 2, 1, 1.0, 0.585),
+        MOS::fromParams(5, 2, 1, 1.0, 0.585, 2),
+        MOS::fromG(5, 3, 0.585, 1.0, 1),
+    };
+    for (MOS& mos : scales) {
+        REQUIRE(mos.path.size() > 1);
+        for (int x = -3; x <= 3; ++x) {
+            for (int y = -3; y <= 3; ++y) {
+                const Vector2i v{x, y};
+                REQUIRE(mos.toRootCoord(mos.fromRootCoord(v)) == v);
+                REQUIRE(mos.fromRootCoord(mos.toRootCoord(v)) == v);
+            }
+        }
+        const Vector2i coord{3, 1};
+        REQUIRE(mos.mapFromMOS(mos, coord) == coord);
+    }
+
+    MOS& mos = scales[0];
+    allocHits.store(0, std::memory_order_relaxed);
+    countAlloc.store(true, std::memory_order_relaxed);
+    const Vector2i converted = mos.fromRootCoord(Vector2i{3, 1});
+    const Vector2i back = mos.toRootCoord(converted);
+    const Vector2i mapped = mos.mapFromMOS(mos, Vector2i{2, -1});
+    const int hits = allocHits.load(std::memory_order_relaxed);
+    countAlloc.store(false, std::memory_order_relaxed);
+    REQUIRE(hits == 0);
+    REQUIRE(back == Vector2i{3, 1});
+    REQUIRE(mapped == Vector2i{2, -1});
 }
 
 TEST_CASE("MOS step sizes", "[mos]") {
