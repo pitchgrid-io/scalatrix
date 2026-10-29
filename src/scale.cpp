@@ -168,15 +168,4 @@ const std::vector<Node>& Scale::getNodes() const {
 }
 
 
-// destructor
-Scale::~Scale() {
-
-    // free the memory
-    // https://stackoverflow.com/questions/13944886/is-stdvector-memory-freed-upon-a-clear
-    nodes_.clear();
-    //nodes_.shrink_to_fit();
-    std::vector<Node>(nodes_).swap(nodes_);
-    
-}
-
 } // namespace scalatrix

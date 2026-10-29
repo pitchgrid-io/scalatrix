@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <new>
+#include <type_traits>
+#include <utility>
 
 using namespace scalatrix;
 using Catch::Matchers::WithinAbs;
@@ -261,6 +263,25 @@ TEST_CASE("root coordinates round-trip without copying the path", "[mos]") {
     REQUIRE(hits == 0);
     REQUIRE(back == Vector2i{3, 1});
     REQUIRE(mapped == Vector2i{2, -1});
+}
+
+TEST_CASE("moving a MOS moves its scale's nodes instead of copying them", "[mos]") {
+    // A user-declared ~Scale() used to suppress Scale's implicit move, so
+    // every MOS move copied base_scale's nodes (128 Nodes per MOS).
+    static_assert(std::is_nothrow_move_constructible<Scale>::value, "Scale moves");
+    static_assert(std::is_nothrow_move_assignable<Scale>::value, "Scale moves");
+    MOS mos = MOS::fromParams(5, 2, 1, 1.0, 0.585);
+    const Node* nodes = mos.base_scale.getNodes().data();
+    REQUIRE(nodes != nullptr);
+    MOS assigned = MOS::fromParams(3, 4, 1, 1.0, 0.25);
+    allocHits.store(0, std::memory_order_relaxed);
+    countAlloc.store(true, std::memory_order_relaxed);
+    MOS moved(std::move(mos));
+    assigned = std::move(moved);
+    const int hits = allocHits.load(std::memory_order_relaxed);
+    countAlloc.store(false, std::memory_order_relaxed);
+    REQUIRE(hits == 0);
+    REQUIRE(assigned.base_scale.getNodes().data() == nodes);
 }
 
 TEST_CASE("MOS step sizes", "[mos]") {

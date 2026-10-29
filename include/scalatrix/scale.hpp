@@ -59,8 +59,6 @@ public:
     void temperToPitchSet(PitchSet& pitchset);
     double getBaseFreq() const { return base_freq_; }
 
-    ~Scale();
-
 };
 
 } // namespace scalatrix

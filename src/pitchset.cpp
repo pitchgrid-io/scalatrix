@@ -108,20 +108,20 @@ PitchSet generateJIPitchSet(PrimeList primes, int max_numorden, double min_log2f
             }
         }
     }
-    // filter out pitches with log2fr outside of min_log2fr and max_log2fr
-    PitchSet filtered_pitchset;
-    for (auto pitch : pitchset) {
-        if (pitch.log2fr > min_log2fr - 1e-6 && pitch.log2fr < max_log2fr + 1e-6) {
-            filtered_pitchset.push_back(pitch);
-        }
-    }
+    // filter out pitches with log2fr outside of min_log2fr and max_log2fr,
+    // in place: one set alive at a time
+    pitchset.erase(std::remove_if(pitchset.begin(), pitchset.end(),
+        [&](const PitchSetPitch& pitch) {
+            return !(pitch.log2fr > min_log2fr - 1e-6 && pitch.log2fr < max_log2fr + 1e-6);
+        }), pitchset.end());
+    pitchset.shrink_to_fit();
     // sort
-    std::sort(filtered_pitchset.begin(), filtered_pitchset.end(), 
+    std::sort(pitchset.begin(), pitchset.end(), 
         [](PitchSetPitch a, PitchSetPitch b) {
             return a.log2fr < b.log2fr;
         }
     );
-    return filtered_pitchset;
+    return pitchset;
 };
 
 
