@@ -282,6 +282,11 @@ TEST_CASE("moving a MOS moves its scale's nodes instead of copying them", "[mos]
     countAlloc.store(false, std::memory_order_relaxed);
     REQUIRE(hits == 0);
     REQUIRE(assigned.base_scale.getNodes().data() == nodes);
+
+    // Read-only callers (the N6 key refresh) use the MOS through a const
+    // reference instead of a copy.
+    const MOS& view = assigned;
+    REQUIRE_THAT(view.coordToFreq(0.0, 0.0, 440.0), WithinAbs(440.0, 1e-9));
 }
 
 TEST_CASE("MOS step sizes", "[mos]") {
