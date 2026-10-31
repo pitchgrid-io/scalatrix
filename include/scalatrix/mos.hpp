@@ -77,6 +77,9 @@ public:
 
     Scale generateScaleFromMOS(double base_freq, int n, int root);
     Scale generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const;
+    // The natural coordinates of generateMappedScale's nodes, in node order,
+    // without building the scale or computing any pitch.
+    std::vector<Vector2i> mappedNaturalCoords(int steps, double offset, int n_nodes, int root) const;
     void retuneScaleWithMOS(Scale& scale, double base_freq);
 
     Vector2i mapFromMOS(MOS& other, Vector2i v);

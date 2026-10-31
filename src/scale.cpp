@@ -43,8 +43,13 @@ Scale Scale::fromAffine(const AffineTransform& A, const double base_freq, int N,
  * 3. Use 3-gap theorem to generate nodes within strip 0 ≤ y < 1
  * 4. Order resulting nodes by x-coordinate to form sequential scale path
  */
-void Scale::recalcWithAffine(const AffineTransform& A, int N, int root_node_idx) {
-    
+// The strip walk of recalcWithAffine: visit(index, natural_coord,
+// tuning_coord) for the root, then the forward and the backward pass.
+// recalcWithAffine and naturalCoordsFromAffine share it, so the nodes they
+// select cannot drift apart.
+template <typename Visit>
+static void walkStrip(const AffineTransform& A, int N, int root_node_idx, Visit&& visit) {
+
     AffineTransform M = AffineTransform(A);
     M.tx = 0;
     M.ty = 0;
@@ -61,44 +66,70 @@ void Scale::recalcWithAffine(const AffineTransform& A, int N, int root_node_idx)
     // Generate nodes within the strip 0 ≤ y < 1 using the 3-gap theorem
     // This creates the sequential scale path by selecting lattice nodes that
     // fall within the horizontal strip after transformation
-    Node root;
-    root.natural_coord = Vector2i(0, 0);
-    root.tuning_coord = A * root.natural_coord;
-    root.pitch = base_freq_;
+    const Vector2i root_natural(0, 0);
+    const Vector2d root_tuning = A * root_natural;
+    visit(root_node_idx, root_natural, root_tuning);
 
-    nodes_[root_node_idx] = root;
-
-    Node last = root;
+    Vector2i natural = root_natural;
+    Vector2d tuning = root_tuning;
 
     // forward pass
     for (int n = 1; n < n_max; ++n) {
-        if (0 <= last.tuning_coord.y + zr.y && last.tuning_coord.y + zr.y < 1) {
-            last.natural_coord += r;
-        } else if (0 <= last.tuning_coord.y + zs.y && last.tuning_coord.y + zs.y < 1) {
-            last.natural_coord += s;
+        if (0 <= tuning.y + zr.y && tuning.y + zr.y < 1) {
+            natural += r;
+        } else if (0 <= tuning.y + zs.y && tuning.y + zs.y < 1) {
+            natural += s;
         } else {
-            last.natural_coord += (r + s);
+            natural += (r + s);
         }
-        last.tuning_coord = A * last.natural_coord;
-        last.pitch = base_freq_ * std::exp2(last.tuning_coord.x);
-        nodes_[root_node_idx + n] = last;
+        tuning = A * natural;
+        visit(root_node_idx + n, natural, tuning);
     }
     //std::cout << "Length of right: " << right.size() << "\n";
 
     // backward pass
-    last = root;
+    natural = root_natural;
+    tuning = root_tuning;
     for (int n = -1; n >= n_min; --n) {
-        if (0 <= last.tuning_coord.y - zr.y && last.tuning_coord.y - zr.y < 1) {
-            last.natural_coord -= r;
-        } else if (0 <= last.tuning_coord.y - zs.y && last.tuning_coord.y - zs.y < 1) {
-            last.natural_coord -= s;
+        if (0 <= tuning.y - zr.y && tuning.y - zr.y < 1) {
+            natural -= r;
+        } else if (0 <= tuning.y - zs.y && tuning.y - zs.y < 1) {
+            natural -= s;
         } else {
-            last.natural_coord -= (r + s);
+            natural -= (r + s);
         }
-        last.tuning_coord = A * last.natural_coord;
-        last.pitch = base_freq_ * std::exp2(last.tuning_coord.x);
-        nodes_[root_node_idx + n] = last;
+        tuning = A * natural;
+        visit(root_node_idx + n, natural, tuning);
     }
+}
+
+void Scale::recalcWithAffine(const AffineTransform& A, int N, int root_node_idx) {
+    walkStrip(A, N, root_node_idx, [&](int i, const Vector2i& natural, const Vector2d& tuning) {
+        Node node;
+        node.natural_coord = natural;
+        node.tuning_coord = tuning;
+        // The root keeps the base frequency itself, as before.
+        node.pitch = i == root_node_idx ? base_freq_ : base_freq_ * std::exp2(tuning.x);
+        nodes_[i] = node;
+    });
+}
+
+void Scale::recalcCoordsWithAffine(const AffineTransform& A, int N, int root_node_idx) {
+    walkStrip(A, N, root_node_idx, [&](int i, const Vector2i& natural, const Vector2d& tuning) {
+        Node node;
+        node.natural_coord = natural;
+        node.tuning_coord = tuning;
+        nodes_[i] = node;
+    });
+}
+
+/*static*/
+std::vector<Vector2i> Scale::naturalCoordsFromAffine(const AffineTransform& A, int N, int root_node_idx) {
+    std::vector<Vector2i> coords(static_cast<size_t>(N));
+    walkStrip(A, N, root_node_idx, [&](int i, const Vector2i& natural, const Vector2d&) {
+        coords[static_cast<size_t>(i)] = natural;
+    });
+    return coords;
 }
 
 void Scale::retuneWithAffine(const AffineTransform& A) {

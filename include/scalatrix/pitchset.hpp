@@ -32,6 +32,13 @@ PitchSet generateETPitchSet(unsigned int n_et, double equave_log2fr = 1.0, doubl
 PitchSet generateJIPitchSet(PrimeList primes, int max_numtimesden = 20, double min_log2fr = 0.0, double max_log2fr = 1.0);
 PitchSet generateHarmonicSeriesPitchSet(PrimeList primes, int base, double min_log2fr = 0.0, double max_log2fr = 1.001);
 
+// The same sets without labels: only the log2fr values, in the same order.
+// For callers that only read the numbers; building no label strings is much
+// cheaper (on an MCU most of a set's cost is its labels).
+std::vector<double> generateETPitchLog2s(unsigned int n_et, double equave_log2fr = 1.0, double min_log2fr = 0.0, double max_log2fr = 1.0);
+std::vector<double> generateJIPitchLog2s(const PrimeList& primes, int max_numtimesden = 20, double min_log2fr = 0.0, double max_log2fr = 1.0);
+std::vector<double> generateHarmonicSeriesPitchLog2s(const PrimeList& primes, int base, double min_log2fr = 0.0, double max_log2fr = 1.001);
+
 
 }; // namespace scalatrix
 

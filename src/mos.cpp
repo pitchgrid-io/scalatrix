@@ -352,14 +352,22 @@ void MOS::retuneThreePoints(Vector2i fixed1, Vector2i fixed2, Vector2i v, double
     _recalcOnRetuneUsingAffine(A);
 };
 
-Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const {
-    // Use structureImpliedAffine for node selection (which notes land in the strip)
+// The transform generateMappedScale selects its nodes with.
+static AffineTransform mappedSelectionAffine(const AffineTransform& structureImpliedAffine, int n, int steps, double offset) {
     double mos_offset = (offset + 0.5) / steps;
     double mos_scale_factor = static_cast<double>(n) / steps;
     AffineTransform stretched_t(1, 0, 0, mos_scale_factor, 0, 0);
     AffineTransform squeezed_t = stretched_t * structureImpliedAffine;
     squeezed_t.ty = mos_offset;
-    Scale scale = Scale::fromAffine(squeezed_t, base_freq, n_nodes, root);
+    return squeezed_t;
+}
+
+Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n_nodes, int root) const {
+    // Use structureImpliedAffine for node selection (which notes land in the strip)
+    AffineTransform squeezed_t = mappedSelectionAffine(structureImpliedAffine, n, steps, offset);
+    // Coordinates only: the loop below sets every node's pitch.
+    Scale scale(base_freq, n_nodes, root);
+    scale.recalcCoordsWithAffine(squeezed_t, n_nodes, root);
 
     // Retune pitches using impliedAffine (tuning generator), but preserve
     // strip y-coordinate from squeezed_t (which includes modeOffset)
@@ -369,6 +377,10 @@ Scale MOS::generateMappedScale(int steps, double offset, double base_freq, int n
     }
 
     return scale;
+}
+
+std::vector<Vector2i> MOS::mappedNaturalCoords(int steps, double offset, int n_nodes, int root) const {
+    return Scale::naturalCoordsFromAffine(mappedSelectionAffine(structureImpliedAffine, n, steps, offset), n_nodes, root);
 }
 
 Scale MOS::generateScaleFromMOS(double base_freq, int n_nodes, int root){

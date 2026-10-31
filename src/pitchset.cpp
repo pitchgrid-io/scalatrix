@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+#include <type_traits>
 
 const int PRIMES[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97};
 
@@ -43,8 +44,31 @@ PrimeList generateDefaultPrimeList(int n_primes) {
 };
 
 
-PitchSet generateETPitchSet(unsigned int n_et, double equave_log2fr, double min_log2fr, double max_log2fr) {
-    PitchSet pitchset;
+// The pitch set builders, with or without labels. The pitches, their
+// log2fr values and their order are the same either way; the label-free
+// sets (generate*Log2s) are for callers that only read the numbers.
+template <bool Labels>
+using SetOf = std::conditional_t<Labels, PitchSet, std::vector<double>>;
+
+static double log2frOf(const PitchSetPitch& p) { return p.log2fr; }
+static double log2frOf(double log2fr) { return log2fr; }
+
+template <bool Labels>
+static void sortByLog2fr(SetOf<Labels>& pitchset) {
+    if constexpr (Labels) {
+        std::sort(pitchset.begin(), pitchset.end(),
+            [](const PitchSetPitch& a, const PitchSetPitch& b) {
+                return a.log2fr < b.log2fr;
+            }
+        );
+    } else {
+        std::sort(pitchset.begin(), pitchset.end());
+    }
+}
+
+template <bool Labels>
+static SetOf<Labels> etSet(unsigned int n_et, double equave_log2fr, double min_log2fr, double max_log2fr) {
+    SetOf<Labels> pitchset;
     
     // Calculate the range of steps to generate
     // For min_log2fr: step * equave_log2fr / n_et >= min_log2fr, so step >= min_log2fr * n_et / equave_log2fr
@@ -53,34 +77,36 @@ PitchSet generateETPitchSet(unsigned int n_et, double equave_log2fr, double min_
     int max_step = (int)floor(max_log2fr * n_et / equave_log2fr);
     
     for (int i = min_step; i <= max_step; i++) {
-        PitchSetPitch p;
-        p.label = std::to_string(i) + "\\" + std::to_string(n_et);
-        p.log2fr = i * equave_log2fr / n_et;
+        double log2fr = i * equave_log2fr / n_et;
         
         // Filter to ensure the pitch is within the specified range
-        if (p.log2fr >= min_log2fr - 1e-6 && p.log2fr <= max_log2fr + 1e-6) {
-            pitchset.push_back(p);
+        if (log2fr >= min_log2fr - 1e-6 && log2fr <= max_log2fr + 1e-6) {
+            if constexpr (Labels) {
+                PitchSetPitch p;
+                p.label = std::to_string(i) + "\\" + std::to_string(n_et);
+                p.log2fr = log2fr;
+                pitchset.push_back(p);
+            } else {
+                pitchset.push_back(log2fr);
+            }
         }
     }
     
     // Sort by log2fr (should already be sorted, but ensure it)
-    std::sort(pitchset.begin(), pitchset.end(), 
-        [](const PitchSetPitch& a, const PitchSetPitch& b) {
-            return a.log2fr < b.log2fr;
-        }
-    );
+    sortByLog2fr<Labels>(pitchset);
     
     return pitchset;
-};
+}
 
-PitchSet generateJIPitchSet(PrimeList primes, int max_numorden, double min_log2fr, double max_log2fr) {
-    PitchSet pitchset;
+template <bool Labels>
+static SetOf<Labels> jiSet(const PrimeList& primes, int max_numorden, double min_log2fr, double max_log2fr) {
+    SetOf<Labels> pitchset;
     PrimeList nums;
     // generate all numbers with prime factors in primes up to max_numorden
     for (int i = 1; i < max_numorden; i++) {
         int r = i;
         double log2fr = 0.0;
-        for (auto p : primes) {
+        for (auto& p : primes) {
             while (r % p.number == 0) {
                 r /= p.number;
                 log2fr += p.log2fr;
@@ -89,44 +115,47 @@ PitchSet generateJIPitchSet(PrimeList primes, int max_numorden, double min_log2f
         bool include = r == 1;
         if(include){
             PseudoPrimeInt p;
-            p.label = std::to_string(i);
+            if constexpr (Labels)
+                p.label = std::to_string(i);
             p.number = i;
             p.log2fr = log2fr;
             nums.push_back(p);
         }
     }
-    for (auto num: nums){
-        for (auto den: nums){
+    for (auto& num: nums){
+        for (auto& den: nums){
             if (std::gcd(num.number, den.number) > 1){
                 continue;
             }
             if (static_cast<int>(num.number) <= max_numorden && static_cast<int>(den.number) <= max_numorden) {
-                PitchSetPitch pitch;
-                pitch.label = num.label + ":" + den.label;
-                pitch.log2fr = num.log2fr - den.log2fr;
-                pitchset.push_back(pitch);
+                if constexpr (Labels) {
+                    PitchSetPitch pitch;
+                    pitch.label = num.label + ":" + den.label;
+                    pitch.log2fr = num.log2fr - den.log2fr;
+                    pitchset.push_back(pitch);
+                } else {
+                    pitchset.push_back(num.log2fr - den.log2fr);
+                }
             }
         }
     }
     // filter out pitches with log2fr outside of min_log2fr and max_log2fr,
     // in place: one set alive at a time
+    using Pitch = typename SetOf<Labels>::value_type;
     pitchset.erase(std::remove_if(pitchset.begin(), pitchset.end(),
-        [&](const PitchSetPitch& pitch) {
-            return !(pitch.log2fr > min_log2fr - 1e-6 && pitch.log2fr < max_log2fr + 1e-6);
+        [&](const Pitch& pitch) {
+            const double log2fr = log2frOf(pitch);
+            return !(log2fr > min_log2fr - 1e-6 && log2fr < max_log2fr + 1e-6);
         }), pitchset.end());
     pitchset.shrink_to_fit();
     // sort
-    std::sort(pitchset.begin(), pitchset.end(), 
-        [](PitchSetPitch a, PitchSetPitch b) {
-            return a.log2fr < b.log2fr;
-        }
-    );
+    sortByLog2fr<Labels>(pitchset);
     return pitchset;
-};
+}
 
-
-PitchSet generateHarmonicSeriesPitchSet(PrimeList primes, int base, double min_log2fr, double max_log2fr) {
-    PitchSet pitchset;
+template <bool Labels>
+static SetOf<Labels> harmonicSeriesSet(const PrimeList& primes, int base, double min_log2fr, double max_log2fr) {
+    SetOf<Labels> pitchset;
     double base_log2fr = log2(base);
     
     // Calculate the range of numerators to generate
@@ -136,35 +165,60 @@ PitchSet generateHarmonicSeriesPitchSet(PrimeList primes, int base, double min_l
     int max_num = (int)floor(base * exp2(max_log2fr));
     
     for (int num = min_num; num <= max_num; num++) {
-        PitchSetPitch pitch;
-        // Simplify the fraction by dividing by GCD
-        int gcd = std::gcd(num, base);
-        int simplified_num = num / gcd;
-        int simplified_base = base / gcd;
-        pitch.label = std::to_string(simplified_num) + ":" + std::to_string(simplified_base);
-        pitch.log2fr = -base_log2fr;
+        double log2fr = -base_log2fr;
         int r = num;
-        for (auto p : primes) {
+        for (auto& p : primes) {
             while (r % p.number == 0) {
                 r /= p.number;
-                pitch.log2fr += p.log2fr;
+                log2fr += p.log2fr;
             }
         }
-        pitch.log2fr += log2(r);
+        log2fr += log2(r);
         
         // Filter pitches to ensure they're within the specified range
-        if (pitch.log2fr >= min_log2fr - 1e-6 && pitch.log2fr <= max_log2fr + 1e-6) {
-            pitchset.push_back(pitch);
+        if (log2fr >= min_log2fr - 1e-6 && log2fr <= max_log2fr + 1e-6) {
+            if constexpr (Labels) {
+                PitchSetPitch pitch;
+                // Simplify the fraction by dividing by GCD
+                int gcd = std::gcd(num, base);
+                int simplified_num = num / gcd;
+                int simplified_base = base / gcd;
+                pitch.label = std::to_string(simplified_num) + ":" + std::to_string(simplified_base);
+                pitch.log2fr = log2fr;
+                pitchset.push_back(pitch);
+            } else {
+                pitchset.push_back(log2fr);
+            }
         }
     }
     
-    std::sort(pitchset.begin(), pitchset.end(), 
-        [](PitchSetPitch a, PitchSetPitch b) {
-            return a.log2fr < b.log2fr;
-        }
-    );
+    sortByLog2fr<Labels>(pitchset);
     return pitchset;
-};
+}
+
+PitchSet generateETPitchSet(unsigned int n_et, double equave_log2fr, double min_log2fr, double max_log2fr) {
+    return etSet<true>(n_et, equave_log2fr, min_log2fr, max_log2fr);
+}
+
+PitchSet generateJIPitchSet(PrimeList primes, int max_numorden, double min_log2fr, double max_log2fr) {
+    return jiSet<true>(primes, max_numorden, min_log2fr, max_log2fr);
+}
+
+PitchSet generateHarmonicSeriesPitchSet(PrimeList primes, int base, double min_log2fr, double max_log2fr) {
+    return harmonicSeriesSet<true>(primes, base, min_log2fr, max_log2fr);
+}
+
+std::vector<double> generateETPitchLog2s(unsigned int n_et, double equave_log2fr, double min_log2fr, double max_log2fr) {
+    return etSet<false>(n_et, equave_log2fr, min_log2fr, max_log2fr);
+}
+
+std::vector<double> generateJIPitchLog2s(const PrimeList& primes, int max_numorden, double min_log2fr, double max_log2fr) {
+    return jiSet<false>(primes, max_numorden, min_log2fr, max_log2fr);
+}
+
+std::vector<double> generateHarmonicSeriesPitchLog2s(const PrimeList& primes, int base, double min_log2fr, double max_log2fr) {
+    return harmonicSeriesSet<false>(primes, base, min_log2fr, max_log2fr);
+}
 
 PitchSetPitch operator+(const PitchSetPitch& a, const PitchSetPitch& b) {
     PitchSetPitch result;
