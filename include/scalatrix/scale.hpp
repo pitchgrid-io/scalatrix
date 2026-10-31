@@ -54,6 +54,13 @@ public:
     std::vector<Node>& getNodes();
     const std::vector<Node>& getNodes() const;
     void recalcWithAffine(const AffineTransform& A, int N, int n_root);
+    // recalcWithAffine without the pitches: the same nodes, natural and
+    // tuning coordinates, pitch left 0. For callers that set every pitch
+    // themselves afterwards (MOS::generateMappedScale).
+    void recalcCoordsWithAffine(const AffineTransform& A, int N, int n_root);
+    // Only the natural coordinates of the nodes fromAffine(A, .., N, n_root)
+    // selects, in node order. No pitches, no Node objects.
+    static std::vector<Vector2i> naturalCoordsFromAffine(const AffineTransform& A, int N, int n_root);
     void retuneWithAffine(const AffineTransform& A);
     int getRootIdx() const { return root_idx_; }
     void temperToPitchSet(PitchSet& pitchset);

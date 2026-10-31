@@ -67,6 +67,11 @@ add_executable(test_integration
     ${SCALATRIX_SOURCES}
 )
 
+add_executable(test_reference_paths
+    test_reference_paths.cpp
+    ${SCALATRIX_SOURCES}
+)
+
 add_executable(test_node
     test_node.cpp
     ${SCALATRIX_SOURCES}
@@ -79,6 +84,7 @@ target_link_libraries(test_mos Catch2::Catch2WithMain)
 target_link_libraries(test_pitch_sets Catch2::Catch2WithMain)
 target_link_libraries(test_label_calculator Catch2::Catch2WithMain)
 target_link_libraries(test_integration Catch2::Catch2WithMain)
+target_link_libraries(test_reference_paths Catch2::Catch2WithMain)
 target_link_libraries(test_node Catch2::Catch2WithMain)
 
 # Enable testing
@@ -90,4 +96,5 @@ catch_discover_tests(test_mos)
 catch_discover_tests(test_pitch_sets)
 catch_discover_tests(test_label_calculator)
 catch_discover_tests(test_integration)
+catch_discover_tests(test_reference_paths)
 catch_discover_tests(test_node)
